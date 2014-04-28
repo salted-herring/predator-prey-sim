@@ -2,12 +2,14 @@
  * PredatorPrey
  * Simulation of a predator hunting a swarm of prey.
  * @author Adam Heins
- * 2014-04-20
+ * 2014-04-28
  */
 
 package swarm;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Frame;
 import java.awt.Graphics;
 
 import javax.swing.JFrame;
@@ -19,10 +21,8 @@ public class PredatorPrey extends JPanel implements Runnable {
 	// Serial Version UID.
 	private static final long serialVersionUID = -3344046793575886157L;
 	
-	// Constants.
-	private final int SCREEN_WIDTH = 500;
-	private final int SCREEN_HEIGHT = 500;
-	private final int SWARM_SIZE = 10;
+	// Size of the swarm.
+	private final int SWARM_SIZE = 100;
 	
 
 	// The swarm of prey.
@@ -38,14 +38,14 @@ public class PredatorPrey extends JPanel implements Runnable {
 	/**
 	 * Constructor.
 	 */
-	public PredatorPrey() {
-		setSize(SCREEN_WIDTH, SCREEN_HEIGHT);
+	public PredatorPrey(int xLow, int yLow, int xHigh, int yHigh) {
+		setBackground(Color.white);
 		
 		// Initialize the swarm.
 		swarm = new Prey[SWARM_SIZE];
 		for (int i = 0; i < SWARM_SIZE; i++) {
 			swarm[i] = new Prey();
-			swarm[i].generateLoc(SCREEN_WIDTH, SCREEN_HEIGHT);
+			swarm[i].generateLoc(xHigh, yHigh);
 		}
 		
 		//Initialize and start the thread
@@ -82,32 +82,30 @@ public class PredatorPrey extends JPanel implements Runnable {
 	public void paintComponent (Graphics g) {
 		super.paintComponent(g);
 		
-		// Draw the swarm
+		// Draw the swarm.
 		for (int i = 0; i < SWARM_SIZE; i++)
 			swarm[i].draw(g);
 	}
 	
 	/**
-	 * Main method
+	 * Main method.
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		
-		// Create new instance of the CssGridGenerator class
-		PredatorPrey simulation = new PredatorPrey();
     	
 		// Declare and set up the frame
 		JFrame frame = new JFrame();
-		frame.setSize(simulation.getWidth(),simulation.getHeight());
+		frame.setExtendedState(Frame.MAXIMIZED_BOTH);
 		frame.setVisible (true);
 		frame.setDefaultCloseOperation (JFrame.EXIT_ON_CLOSE);
 		frame.getContentPane ().setLayout (new BorderLayout ());
+		
+		// Create new instance of the PredatorPrey simulation
+		PredatorPrey simulation = new PredatorPrey(100, 100, 1000, 500);
 				
 		// Add the panel to the frame
 		frame.getContentPane ().add (simulation, BorderLayout.CENTER);
 				
 		frame.validate();
 	}
-	
-	
 }
