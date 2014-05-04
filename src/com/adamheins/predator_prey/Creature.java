@@ -2,21 +2,24 @@
  * Creature
  * Abstract class that is the superclass of the Prey and Predator classes.
  * @author Adam Heins
- * 2014-04-20
+ * 2014-05-03
  */
 
-package swarm;
+package com.adamheins.predator_prey;
 
 import java.awt.Color;
 import java.awt.Graphics;
 
 public abstract class Creature {
 	
+	protected final double TAU = 2 * Math.PI;
+	
 	// Variables
 	protected Color color;
 	protected int radius;
 	protected double speed;
 	protected double newX, newY;
+	protected double newBearing;
 	
 	public double bearing;
 	public double x, y;
@@ -42,6 +45,7 @@ public abstract class Creature {
 	public void move () {
 		x = newX;
 		y = newY;
+		bearing = newBearing;
 	}
 	
 	
@@ -56,18 +60,16 @@ public abstract class Creature {
 	
 	
 	/**
-	 * Bounds a number between a high and low bound.
-	 * @param num - The number to be bound.
-	 * @param lowBound - The lower bound that the number cannot be beneath.
-	 * @param highBound - The higher bound that the number cannot be above.
-	 * @return The bounded number.
+	 * Bounds an angle between negative pi and pi.
+	 * @param angle The angle to be bound.
+	 * @return The bounded angle.
 	 */
-	protected double bound (double num, double lowBound, double highBound) {
-		if (num > highBound)
-			return highBound;
-		if (num < lowBound)
-			return lowBound;
-		return num;
+	protected double bound (double angle) {
+		if (angle > Math.PI)
+			return angle - TAU;
+		else if (angle < -Math.PI)
+			return angle + TAU;
+		return angle;
 	}
 	
 	

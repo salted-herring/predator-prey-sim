@@ -5,7 +5,7 @@
  * 2014-04-20
  */
 
-package swarm;
+package com.adamheins.predator_prey;
 
 import java.awt.Color;
 

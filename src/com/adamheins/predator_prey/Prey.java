@@ -2,10 +2,10 @@
  * Prey
  * Extends Creature to implement a prey that is part of the swarm.
  * @author Adam Heins
- * 2014-04-28
+ * 2014-05-03
  */
 
-package swarm;
+package com.adamheins.predator_prey;
 
 import java.awt.Color;
 
@@ -13,6 +13,9 @@ public class Prey extends Creature {
 	
 	// Maximum angle that the prey can turn in one tick.
 	private final double MAX_TURN_ANGLE = 2 * Math.PI / 30.0;
+	private final double RANDOM_VARIATION = 0.2;
+	private final double SWARM_HEADING_STRENGTH = 300.0;
+	private final double HOME_HEADING_STRENGTH = 2.0;
 	
 	// Number of nearest neighbours the prey factors into its movement.
 	private final int NUM_NEIGHBOURS = 10;
@@ -106,13 +109,13 @@ public class Prey extends Creature {
 		yComp /= swarm.length;
 		
 		// Add component in direction of average swarm bearing.
-		xComp += 200.0 * Math.cos(swarmBearing);
-		yComp += 200.0 * Math.sin(swarmBearing);
+		xComp += SWARM_HEADING_STRENGTH * Math.cos(swarmBearing);
+		yComp += SWARM_HEADING_STRENGTH * Math.sin(swarmBearing);
 		
 		// Add components of the home vector.
-		xComp += (homeX - x) / 2.0;
-		yComp += (homeY - y) / 2.0;
-		
+		xComp += HOME_HEADING_STRENGTH * (homeX - x);
+		yComp += HOME_HEADING_STRENGTH * (homeY - y);
+	
 		// Calculate length of vector currently.
 		double length = Math.sqrt(xComp * xComp + yComp * yComp);
 		
@@ -122,20 +125,25 @@ public class Prey extends Creature {
 		double lC = Math.sqrt(xC * xC + yC * yC);
 		
 		// Add component pointing away from nearest neighbour.
-		xComp += xC / lC * length / neighbourDist[0] * 6.0;
-		yComp += yC / lC * length / neighbourDist[0] * 6.0;
+		//if (lC < 20.0) {
+		xComp += xC / lC * length / neighbourDist[0] * 4.0;
+		yComp += yC / lC * length / neighbourDist[0] * 4.0;
+		//}
 		
 		// Calculate angle of movement vector.
 		double angle = Math.atan2(yComp, xComp);
+		if (n == 0)
+			System.out.println("Bearing: " + swarm[0].bearing + " Angle: " + angle);
 		
 		// Calculate new bearing.
-		if (bearing < angle)
-			newBearing = (bearing + Math.min(MAX_TURN_ANGLE, angle - bearing)) % (2 * Math.PI);
+		double diff = bearing - angle;
+		if ((diff > -Math.PI && diff < 0) || diff > Math.PI)
+			newBearing = bound(bearing + Math.min(MAX_TURN_ANGLE, Math.abs(diff)));
 		else
-			newBearing = (bearing - Math.min(MAX_TURN_ANGLE, bearing - angle)) % (2 * Math.PI);
+			newBearing = bound(bearing - Math.min(MAX_TURN_ANGLE, Math.abs(diff)));
 		
 		// Add small random variation to the bearing
-		newBearing += Math.random() * 0.2 - 0.1;
+		newBearing += Math.random() * RANDOM_VARIATION - RANDOM_VARIATION / 2.0;
 
 		// Calculate new x and y coordinates.
 		newX = x + speed * Math.cos(newBearing);

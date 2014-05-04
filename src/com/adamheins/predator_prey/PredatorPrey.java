@@ -2,21 +2,23 @@
  * PredatorPrey
  * Simulation of a predator hunting a swarm of prey.
  * @author Adam Heins
- * 2014-04-28
+ * 2014-05-03
  */
 
-package swarm;
+package com.adamheins.predator_prey;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Frame;
 import java.awt.Graphics;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseMotionListener;
 
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 
 
-public class PredatorPrey extends JPanel implements Runnable {
+public class PredatorPrey extends JPanel implements Runnable, MouseMotionListener {
 	
 	// Serial Version UID.
 	private static final long serialVersionUID = -3344046793575886157L;
@@ -27,6 +29,9 @@ public class PredatorPrey extends JPanel implements Runnable {
 
 	// The swarm of prey.
 	private Prey [] swarm;
+	
+	// Coordinates of mouse.
+	int mouseX, mouseY;
 	
 	// The predator hunting the prey.
 	// CURRENTLY UNIMPLEMENTED.
@@ -48,6 +53,11 @@ public class PredatorPrey extends JPanel implements Runnable {
 			swarm[i].generateLoc(xHigh, yHigh);
 		}
 		
+		mouseX = 500;
+		mouseY = 500;
+		
+		addMouseMotionListener(this);
+		
 		//Initialize and start the thread
 		t = new Thread(this);
 		t.setPriority(Thread.MIN_PRIORITY);
@@ -62,7 +72,7 @@ public class PredatorPrey extends JPanel implements Runnable {
 	    		
 	    		// Calculate moves for the swarm.
 	    		for (int i = 0; i < SWARM_SIZE; i++)
-	    			swarm[i].calculateMove(null, swarm, i, getWidth() / 2.0, getHeight() / 2.0);
+	    			swarm[i].calculateMove(null, swarm, i, mouseX, mouseY);
 	    		
 	    		// Move swarm.
 	    		for (int i = 0; i < SWARM_SIZE; i++)
@@ -86,6 +96,18 @@ public class PredatorPrey extends JPanel implements Runnable {
 		for (int i = 0; i < SWARM_SIZE; i++)
 			swarm[i].draw(g);
 	}
+	
+	
+	@Override
+	public void mouseDragged(MouseEvent arg0) {}
+
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		mouseX = e.getX();
+		mouseY = e.getY();
+	}
+	
 	
 	/**
 	 * Main method.
