@@ -1,20 +1,38 @@
-var SPEED = 2.0;
-var NUM_BOIDS = 20;
-var DELAY = 50;
+var config = {
+  weights : {
+    separation: 1.0,
+    alignment: 1.0,
+    cohesion: 1.0,
+    flee: 5.0
+  },
+  prey: {
+    speed: 2.0,
+    number: 20,
+    maxTurnAngle: 0.5,
+    minSeparation: 15.0,
+    predatorSightDist: 200
+  },
+  predator: {
+    speed: 2.0,
+    number: 2,
+    killDist: 6.0,
+    maxTurnAngle: 0.2
+  },
+  env: {
+    delay: 50
+  }
+};
 
-var MIN_SEP_DIST = 15.0;
-
-// Weightings of each factor.
-var SEPARATION_WEIGHT = 1.0;
-var ALIGNMENT_WEIGHT = 1.0;
-var COHESION_WEIGHT = 0.10;
-var PREDATOR_WEIGHT = 2.0;
-
-// Canvas dimensions, set when the script first gets the canvas.
-var SCREEN_WIDTH;
-var SCREEN_HEIGHT;
+function absMin(a, b) {
+  return Math.abs(a) < Math.abs(b) ? a : b;
+}
 
 function Boid(position, velocity) {
+  this.pos = position;
+  this.vel = velocity;
+}
+
+function Predator(position, velocity) {
   this.pos = position;
   this.vel = velocity;
 }
@@ -35,6 +53,55 @@ Vector.prototype.normalize = function() {
 Vector.prototype.scale = function(scalar) {
   this.x *= scalar;
   this.y *= scalar;
+}
+
+/* Calculates the distance between this vector and another. */
+Vector.prototype.dist = function(other) {
+  var dx = other.x - this.x;
+  var dy = other.y - this.y;
+  return dx * dx + dy * dy;
+}
+
+/*
+ * Subtracts the @other vector from this one.
+ *
+ * @other - The vector being subtracted from this one.
+ *
+ * Returns a new vector that is the difference between this one and @other.
+ */
+Vector.prototype.subtract = function(other) {
+  return new Vector(this.x - other.x, this.y - other.y);
+}
+
+Vector.prototype.add = function(other) {
+  return new Vector(this.x + other.x, this.y + other.y);
+}
+
+Vector.prototype.bound = function(xU, yU) {
+  var bounded = new Vector(this.x % xU, this.y % yU);
+  if (bounded.x < 0) {
+    bounded.x = xU + bounded.x;
+  }
+  if (bounded.y < 0) {
+    bounded.y = yU + bounded.y;
+  }
+  return bounded;
+}
+
+Vector.prototype.len = function() {
+  return Math.sqrt(this.len2());
+}
+
+Vector.prototype.len2 = function() {
+  return this.x * this.x + this.y * this.y;
+}
+
+Vector.prototype.dot = function(other) {
+  return this.x * other.x + this.y * other.y;
+}
+
+Vector.prototype.angle = function() {
+  return Math.atan2(this.y, this.x);
 }
 
 function calcCenterOfMass(boids) {
@@ -69,12 +136,12 @@ function calcSeparations(boids) {
 
       // Calculate such that resulting vector points away from the offending
       // neighbour.
-      var dx = boids[i].pos.x - boids[j].pos.x;
-      dx = Math.min(dx, SCREEN_WIDTH - dx);
+      var dx = boids[i].pos.x - boids[j].pos.x; // TODO broken logic
+      dx = absMin(dx, config.env.screenWidth - Math.abs(dx));
       var dy = boids[i].pos.y - boids[j].pos.y;
-      dy = Math.min(dy, SCREEN_HEIGHT - dy);
+      dy = absMin(dy, config.env.screenHeight - Math.abs(dy));
 
-      if (dx * dx + dy * dy < MIN_SEP_DIST * MIN_SEP_DIST) {
+      if (dx * dx + dy * dy < config.prey.minSeparation * config.prey.minSeparation) {
         dists[i].push(new Vector(dx, dy));
       }
     }
@@ -82,7 +149,90 @@ function calcSeparations(boids) {
   return dists;
 }
 
-function calcNewPositions(boids) {
+Boid.prototype.findClosestPredator = function(predators) {
+  if (predators.length === 0) {
+    return -1;
+  }
+  var closestIndex = 0;
+  var closestDist = this.pos.dist(predators[0].pos);
+  for (var i = 1; i < predators.length; ++i) {
+    var dx = Math.abs(this.pos.x - predators[i].pos.x);
+    dx = Math.min(dx, config.env.screenWidth - dx);
+    var dy = Math.abs(this.pos.y - predators[i].pos.y);
+    dx = Math.min(dy, config.env.screenHeight - dy);
+    var dist = dx * dx + dy * dy;
+
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestIndex = i;
+    }
+  }
+  if (closestDist < config.prey.predatorSightDist * config.prey.predatorSightDist) {
+    return closestIndex;
+  } else {
+    return -1;
+  }
+}
+
+Predator.prototype.findClosestPrey = function(boids) {
+  var closestIndex = 0;
+  var closestDist = this.pos.dist(boids[0].pos);
+  for (var i = 1; i < boids.length; ++i) {
+    var dx = Math.abs(this.pos.x - boids[i].pos.x);
+    dx = Math.min(dx, config.env.screenWidth - dx);
+    var dy = Math.abs(this.pos.y - boids[i].pos.y);
+    dy = Math.min(dy, config.env.screenHeight - dy);
+    var dist = dx * dx + dy * dy;
+
+    if (dist < closestDist) {
+      closestDist = dist;
+      closestIndex = i;
+    }
+  }
+  return closestIndex;
+}
+
+Predator.prototype.move = function(boids) {
+  var closestPreyIndex = this.findClosestPrey(boids);
+  var movementVector = boids[closestPreyIndex].pos.subtract(this.pos);
+
+  // Draw a line from this predator to targeted prey.
+  var ctx = config.env.ctx;
+  ctx.beginPath();
+  ctx.moveTo(this.pos.x, this.pos.y);
+  ctx.lineTo(boids[closestPreyIndex].pos.x, boids[closestPreyIndex].pos.y);
+  ctx.stroke();
+
+  var angle = this.vel.angle();
+  var dAngle = movementVector.angle() - angle;
+
+  // Ensure turn angle does not exceed the max allowed value.
+  if (Math.abs(dAngle) > config.predator.maxTurnAngle) {
+    dAngle %= config.predator.maxTurnAngle;
+  }
+
+  angle += dAngle;
+  this.vel = new Vector(Math.cos(angle), Math.sin(angle));
+  this.vel.scale(config.predator.speed);
+
+  // Bound the predator so that it stays on the screen.
+  this.pos = this.pos.add(this.vel).bound(config.env.screenWidth, config.env.screenHeight);
+
+  // Kill the prey if is has been caught by the predator.
+  if (this.pos.dist(boids[closestPreyIndex].pos) < config.predator.killDist * config.predator.killDist) {
+    boids.splice(closestPreyIndex, 1);
+    --config.prey.number;
+  }
+}
+
+function movePredators(predators, boids) {
+  for (var i = 0; i < predators.length; ++i) {
+    predators[i].move(boids);
+  }
+}
+
+
+function calcNewPositions(boids, predators) {
   var dists = calcSeparations(boids);
   var meanHeading = calcMeanHeading(boids);
   var centerOfMass = calcCenterOfMass(boids);
@@ -91,18 +241,18 @@ function calcNewPositions(boids) {
 
     // Calculate the cohesion vector.
     var cx = centerOfMass.x - boids[i].pos.x;
-    cx = Math.min(cx, SCREEN_WIDTH - cx);
+    cx = absMin(cx, config.env.screenWidth - Math.abs(cx));
     var cy = centerOfMass.y - boids[i].pos.y;
-    cy = Math.min(cy, SCREEN_HEIGHT - cy);
+    cy = absMin(cy, config.env.screenHeight - Math.abs(cy));
 
     var cohesionVector = new Vector(cx, cy);
     cohesionVector.normalize();
-    cohesionVector.scale(COHESION_WEIGHT);
+    cohesionVector.scale(config.weights.cohesion);
 
     // Calculate the heading vector.
     var alignmentVector = new Vector(meanHeading.x - boids[i].vel.x, meanHeading.y - boids[i].vel.y);
     alignmentVector.normalize();
-    alignmentVector.scale(ALIGNMENT_WEIGHT);
+    alignmentVector.scale(config.weights.alignment);
 
     // Calculate the separation vector. Currently all boids within the
     // separation radius are treated equally: is not a continuous function of
@@ -113,73 +263,175 @@ function calcNewPositions(boids) {
       separationVector.y += dists[i][j].y;
     }
     separationVector.normalize();
-    separationVector.scale(SEPARATION_WEIGHT);
+    separationVector.scale(config.weights.separation);
+
+    // Find the closest predator. If the closest predator is within a certain
+    // range, the boid wants to escape.
+    var closestPredatorIndex = boids[i].findClosestPredator(predators);
+    var closestPredatorVector = new Vector(0, 0);
+
+    // Check if the closest predator is within range to be noticed.
+    if (closestPredatorIndex !== -1) {
+      // Create a vector pointing away from the predator.
+      var closestPredator = predators[closestPredatorIndex];
+      closestPredatorVector = boids[i].pos.subtract(closestPredator.pos);
+
+      // Scale the weighting linearly as a function of length.
+      var pDist = closestPredatorVector.len2();
+      var nFactor = pDist / (config.prey.predatorSightDist * config.prey.predatorSightDist);
+      var sFactor = 1 - nFactor;
+      closestPredatorVector.normalize();
+      closestPredatorVector.scale(config.weights.flee * sFactor);
+    }
 
     // Put everything together in one vector.
-    var changeVector = new Vector(cohesionVector.x + alignmentVector.x + separationVector.x,
-        cohesionVector.y + alignmentVector.y + separationVector.y);
-    cohesionVector.normalize();
+    var changeVector = new Vector(cohesionVector.x + alignmentVector.x + separationVector.x
+        + closestPredatorVector.x, cohesionVector.y + alignmentVector.y + separationVector.y,
+        + closestPredatorVector.y);
+    changeVector.normalize();
 
-    // Update the heading of this boid. The heading is the normalized sum of the
-    // current velocity vector and the new velocity vector, such that the boid's
-    // turning is fairly smooth.
-    boids[i].vel.x += changeVector.x * SPEED;
-    boids[i].vel.y += changeVector.y * SPEED;
-    boids[i].vel.normalize();
-    boids[i].vel.scale(SPEED);
+    var angle = boids[i].vel.angle();
+    var dAngle = changeVector.angle() - angle;
 
-    // Bound the boid such that it stays on the screen.
-    boids[i].pos.x = (boids[i].pos.x + boids[i].vel.x) % SCREEN_WIDTH;
-    boids[i].pos.y = (boids[i].pos.y + boids[i].vel.y) % SCREEN_HEIGHT;
-    if (boids[i].pos.x < 0)
-      boids[i].pos.x = SCREEN_WIDTH - boids[i].pos.x;
-    if (boids[i].pos.y < 0)
-      boids[i].pos.y = SCREEN_HEIGHT - boids[i].pos.y;
+    // Ensure turn angle does not exceed the max allowed value.
+    if (Math.abs(dAngle) > config.prey.maxTurnAngle) {
+      dAngle %= config.prey.maxTurnAngle;
+    }
+
+    angle += dAngle;
+    boids[i].vel = new Vector(Math.cos(angle), Math.sin(angle));
+    boids[i].vel.scale(config.prey.speed);
+
+    // Bound the boid so that it stays on the screen.
+    boids[i].pos = boids[i].pos.add(boids[i].vel).bound(config.env.screenWidth, config.env.screenHeight);
   }
 }
 
-function drawBoid(ctx, boid) {
-  var angle = Math.atan2(boid.vel.y, boid.vel.x);
+/* Draws a triangle centered on x and y and aimed toward angle. */
+function drawTriangle(ctx, x, y, distForward, distBackward, angle) {
   ctx.beginPath();
-  // I <3 magic numbers.
-  ctx.moveTo(boid.pos.x + 6 * Math.cos(angle), boid.pos.y + 6 * Math.sin(angle));
-  ctx.lineTo(boid.pos.x + 4 * Math.cos(angle + 2.094), boid.pos.y + 4 * Math.sin(angle + 2.094));
-  ctx.lineTo(boid.pos.x + 4 * Math.cos(angle + 4.189), boid.pos.y + 4 * Math.sin(angle + 4.189));
+  ctx.moveTo(x + distForward * Math.cos(angle),
+      y + distForward * Math.sin(angle));
+  ctx.lineTo(x + distBackward * Math.cos(angle + 2.094),
+      y + distBackward * Math.sin(angle + 2.094));
+  ctx.lineTo(x + distBackward * Math.cos(angle + 4.189),
+      y + distBackward * Math.sin(angle + 4.189));
   ctx.fill();
 }
 
-function draw(ctx, boids) {
-  for (var i = 0; i < boids.length; ++i) {
-    drawBoid(ctx, boids[i]);
+Boid.create = function(screenWidth, screenHeight) {
+  var x = Math.floor(Math.random() * screenWidth);
+  var y = Math.floor(Math.random() * screenHeight);
+  var vel = new Vector(Math.random(), Math.random());
+  vel.normalize();
+  vel.scale(config.prey.speed);
+  return new Boid(new Vector(x, y), vel);
+}
+
+Predator.create = function(screenWidth, screenHeight) {
+  var x = Math.floor(Math.random() * screenWidth);
+  var y = Math.floor(Math.random() * screenHeight);
+  var vel = new Vector(Math.random(), Math.random());
+  vel.normalize();
+  vel.scale(config.predator.speed);
+  return new Predator(new Vector(x, y), vel);
+}
+
+/*
+ * Initialize the arrays of prey and predators.
+ */
+function init(screenWidth, screenHeight) {
+  var prey = [];
+  var predators = [];
+  for (var i = 0; i < config.prey.number; ++i) {
+    prey.push(Boid.create(screenWidth, screenHeight));
   }
-}
-
-function initBoids(num, width, height) {
-  var boids = [];
-  for (var i = 0; i < num; ++i) {
-    var x = Math.floor(Math.random() * width);
-    var y = Math.floor(Math.random() * height);
-    var vector = new Vector(Math.random(), Math.random());
-    vector.normalize();
-    vector.scale(SPEED);
-    boids.push(new Boid(new Vector(x, y), vector));
+  for (var i = 0; i < config.predator.number; ++i) {
+    predators.push(Predator.create(screenWidth, screenHeight));
   }
-  return boids;
+  return {
+    prey: prey,
+    predators: predators
+  };
 }
 
-function loop(ctx, boids) {
-  ctx.clearRect(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
-  draw(ctx, boids);
-  calcNewPositions(boids);
+/*
+ * Draws a prey.
+ *
+ * @ctx - The graphics context with which to draw.
+ */
+Boid.prototype.draw = function(ctx) {
+  var angle = Math.atan2(this.vel.y, this.vel.x);
+  ctx.fillStyle = "black";
+  drawTriangle(ctx, this.pos.x, this.pos.y, 6, 4, angle);
 }
 
+/*
+ * Draws a predator.
+ *
+ * @ctx - The graphics context with which to draw.
+ */
+Predator.prototype.draw = function(ctx) {
+  var angle = Math.atan2(this.vel.y, this.vel.x);
+  ctx.fillStyle = "red";
+  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, angle);
+}
+
+/*
+ * Renders all of the creatures in the simulation.
+ *
+ * @ctx - The graphics context with which to draw.
+ * @boids - The array of boids.
+ * @predators - The array of predators.
+ */
+function render(ctx, boids, predators) {
+  ctx.clearRect(0, 0, config.env.screenWidth, config.env.screenHeight);
+  boids.forEach(function(boid) {
+    boid.draw(ctx);
+  });
+  predators.forEach(function(predator) {
+    predator.draw(ctx);
+  });
+}
+
+/*
+ * Moves all of the creatures in the simulation.
+ *
+ * @boids - The array of prey.
+ * @predators - The array of predators.
+ */
+function move(boids, predators) {
+  movePredators(predators, boids);
+  calcNewPositions(boids, predators);
+}
+
+/*
+ * Main program loop.
+ *
+ * @ctx - The graphics context with which to draw.
+ * @boids - The array of prey.
+ * @predators - The array of predators.
+ */
+function loop(ctx, boids, predators) {
+  render(ctx, boids, predators);
+  move(boids, predators);
+}
+
+/*
+ * Entry point of the program.
+ */
 function main() {
   var canvas = document.getElementById('boidsCanvas');
   var ctx = canvas.getContext('2d');
-  SCREEN_WIDTH = canvas.width;
-  SCREEN_HEIGHT = canvas.height;
-  boids = initBoids(NUM_BOIDS, canvas.width, canvas.height);
-  setInterval(function() { loop(ctx, boids) }, DELAY);
+
+  config.env.screenWidth = canvas.width;
+  config.env.screenHeight = canvas.height;
+  config.env.ctx = ctx;
+
+  var creatures = init(config.env.screenWidth, config.env.screenHeight);
+  setInterval(function() {
+    loop(ctx, creatures.prey, creatures.predators)
+  }, config.env.delay);
 }
 
 main();
