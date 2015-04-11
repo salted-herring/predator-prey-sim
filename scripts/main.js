@@ -1,7 +1,7 @@
 var config = {
   weights : {
     separation: 2.0,
-    alignment: 2.0,
+    alignment: 1.0,
     cohesion: 1.0,
     flee: 5.0
   },
@@ -27,22 +27,16 @@ function absMin(a, b) {
   return Math.abs(a) < Math.abs(b) ? a : b;
 }
 
-function Predator(position, velocity) {
-  this.pos = position;
-  this.vel = velocity;
-}
-
-function calcCenterOfMass(boids) {
+function calcCenterOfMass(preyList) {
   var centerOfMass = new Vector(0, 0);
-  for (var i = 0; i < boids.length; ++i) {
-    centerOfMass.x += boids[i].pos.x;
-    centerOfMass.y += boids[i].pos.y;
-  }
-  centerOfMass.scale(1 / boids.length);
+  preyList.forEach(function(prey) {
+    centerOfMass.add(prey.pos);
+  });
+  centerOfMass.scale(1 / preyList.length);
   return centerOfMass;
 }
 
-function calcMeanHeading(boids) {
+function calcMeanHeading(preyList) {
   var heading = new Vector(0, 0);
   preyList.forEach(function(prey) {
     heading = heading.add(prey.vel);
@@ -72,24 +66,6 @@ function calcSeparations(boids) {
   return dists;
 }
 
-Predator.prototype.findClosestPrey = function(prey) {
-  if (preyList.length === 0) {
-    return -1;
-  }
-
-  var closestIndex = -1;
-  var closestDist = config.env.screen.len2();
-  var predator = this;
-  prey.forEach(function(boid, index) {
-    var dist = predator.pos.boundedDist(boid.pos, config.env.screenWidth, config.env.screenHeight);
-    if (dist < closestDist) {
-      closestDist = dist;
-      closestIndex = index;
-    }
-  });
-  return closestIndex;
-}
-
 function diffAngle(a, b) {
   var c = b - a;
   if (c > Math.PI) {
@@ -107,52 +83,6 @@ function drawLine(ctx, a, b) {
   ctx.stroke();
 }
 
-Predator.prototype.move = function(boids) {
-  var closestPreyIndex = this.findClosestPrey(boids);
-  var target = boids[closestPreyIndex];
-  var movementVector = target.pos.subtract(this.pos);
-  if (movementVector.x < 0) {
-    movementVector.x = absMin(movementVector.x, movementVector.x + 500);
-  } else {
-    movementVector.x = absMin(movementVector.x, movementVector.x - 500);
-  }
-  if (movementVector.y < 0) {
-    movementVector.y = absMin(movementVector.y, movementVector.y + 500);
-  } else {
-    movementVector.y = absMin(movementVector.y, movementVector.y - 500);
-  }
-
-  // Draw a line from this predator to targeted prey.
-  config.env.ctx.strokeStyle="#aaa";
-  drawLine(config.env.ctx, this.pos, target.pos);
-
-  var vAngle = this.vel.angle();
-  var mAngle = movementVector.angle();
-
-  // Get the absolute difference in angle.
-  var dAngle = diffAngle(mAngle, vAngle);
-
-  // Ensure turn angle does not exceed the max allowed value.
-  dAngle = Math.min(dAngle, config.predator.maxTurnAngle);
-
-  if (diffAngle(vAngle + dAngle, mAngle) > diffAngle(vAngle - dAngle, mAngle)) {
-    vAngle -= dAngle;
-  } else {
-    vAngle += dAngle;
-  }
-
-  this.vel = new Vector(Math.cos(vAngle), Math.sin(vAngle));
-  this.vel.scale(config.predator.speed);
-
-  // Bound the predator so that it stays on the screen.
-  this.pos = this.pos.add(this.vel).bound(config.env.screenWidth, config.env.screenHeight);
-
-  // Kill the prey if is has been caught by the predator.
-  if (this.pos.dist(target.pos) < config.predator.killDist * config.predator.killDist) {
-    boids.splice(closestPreyIndex, 1);
-    --config.prey.number;
-  }
-}
 
 function movePredators(predatorList, preyList) {
   predatorList.forEach(function(predator) {
@@ -169,7 +99,18 @@ function movePrey(preyList, predators) {
   });
 }
 
-/* Draws a triangle centered on x and y and aimed toward angle. */
+/*
+ * Draws a triangle centered on x and y and aimed toward angle.
+ *
+ * @param ctx - The graphics context with which to draw.
+ * @param x - The x-coordinate of the point on which the triangle is centered.
+ * @param y - The y-coordinate of the point on which the triangle is centered.
+ * @param distForward - The distance between the center point and the front
+ *     point of the triangle.
+ * @param distBackward - The distance between the center point and the back
+ *     two points of the triangle.
+ * @param angle - The orientation angle.
+ */
 function drawTriangle(ctx, x, y, distForward, distBackward, angle) {
   ctx.beginPath();
   ctx.moveTo(x + distForward * Math.cos(angle),
@@ -179,15 +120,6 @@ function drawTriangle(ctx, x, y, distForward, distBackward, angle) {
   ctx.lineTo(x + distBackward * Math.cos(angle + 4.189),
       y + distBackward * Math.sin(angle + 4.189));
   ctx.fill();
-}
-
-Predator.create = function(screenWidth, screenHeight) {
-  var x = Math.floor(Math.random() * screenWidth);
-  var y = Math.floor(Math.random() * screenHeight);
-  var vel = new Vector(Math.random(), Math.random());
-  vel.normalize();
-  vel.scale(config.predator.speed);
-  return new Predator(new Vector(x, y), vel);
 }
 
 /*
@@ -206,17 +138,6 @@ function init(screenWidth, screenHeight) {
     prey: prey,
     predators: predators
   };
-}
-
-/*
- * Draws a predator.
- *
- * @ctx - The graphics context with which to draw.
- */
-Predator.prototype.draw = function(ctx) {
-  var angle = Math.atan2(this.vel.y, this.vel.x);
-  ctx.fillStyle = "red";
-  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, angle);
 }
 
 /*
