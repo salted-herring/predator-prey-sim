@@ -13,7 +13,7 @@ Predator.create = function(screenWidth, screenHeight) {
   return new Predator(new Vector(x, y), vel);
 }
 
-Predator.prototype.findClosestPrey = function(prey) {
+Predator.prototype.findClosestPrey = function(preyList, config) {
   if (preyList.length === 0) {
     return -1;
   }
@@ -21,8 +21,8 @@ Predator.prototype.findClosestPrey = function(prey) {
   var closestIndex = -1;
   var closestDist = config.env.screen.len2();
   var predator = this;
-  prey.forEach(function(boid, index) {
-    var dist = predator.pos.boundedDist(boid.pos, config.env.screenWidth, config.env.screenHeight);
+  preyList.forEach(function(prey, index) {
+    var dist = predator.pos.boundedDist(prey.pos, config.env.screen.x, config.env.screen.y);
     if (dist < closestDist) {
       closestDist = dist;
       closestIndex = index;
@@ -32,20 +32,19 @@ Predator.prototype.findClosestPrey = function(prey) {
 }
 
 
-Predator.prototype.move = function(boids) {
-  var closestPreyIndex = this.findClosestPrey(boids);
+Predator.prototype.move = function(boids, config) {
+  // If there are no prey left. just keep moving aimlessy.
+  if (boids.length === 0) {
+    this.pos = this.pos.add(this.vel).bound(config.env.screen.x, config.env.screen.y);
+    return;
+  }
+
+  var closestPreyIndex = this.findClosestPrey(boids, config);
   var target = boids[closestPreyIndex];
-  var movementVector = target.pos.subtract(this.pos);
-  if (movementVector.x < 0) {
-    movementVector.x = absMin(movementVector.x, movementVector.x + 500);
-  } else {
-    movementVector.x = absMin(movementVector.x, movementVector.x - 500);
-  }
-  if (movementVector.y < 0) {
-    movementVector.y = absMin(movementVector.y, movementVector.y + 500);
-  } else {
-    movementVector.y = absMin(movementVector.y, movementVector.y - 500);
-  }
+
+  // Find the shortest path to the target prey.
+  var movementVector = this.pos.shortestBoundedPathTo(target.pos,
+      config.env.screen.x, config.env.screen.y);
 
   // Draw a line from this predator to targeted prey.
   config.env.ctx.strokeStyle="#aaa";
@@ -73,7 +72,7 @@ Predator.prototype.move = function(boids) {
   this.pos = this.pos.add(this.vel).bound(config.env.screenWidth, config.env.screenHeight);
 
   // Kill the prey if is has been caught by the predator.
-  if (this.pos.dist(target.pos) < config.predator.killDist * config.predator.killDist) {
+  if (this.pos.boundedDist(target.pos, config.env.screen.x, config.env.screen.y) < config.predator.killDist * config.predator.killDist) {
     boids.splice(closestPreyIndex, 1);
     --config.prey.number;
   }

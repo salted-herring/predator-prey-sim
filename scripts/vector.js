@@ -31,20 +31,8 @@ Vector.prototype.scale = function(scalar) {
 }
 
 /*
- * Calculates the distance between this vector and another.
- *
- * @param other - The other vector.
- *
- * Returns the distance between this distance and other.
- */
-Vector.prototype.dist = function(other) {
-  var d = this.subtract(other);
-  return d.x * d.x + d.y * d.y;
-}
-
-/*
- * Calculates a new a vector that is the shortest path from another vector to
- * this one given the bounds on the area's size.
+ * Calculates a new a vector that is the shortest path from this vector to
+ * another given the bounds on the area's size.
  *
  * @param other - The vector from which the path begins.
  * @param xBound - The upper bound in the x-direction.
@@ -52,13 +40,32 @@ Vector.prototype.dist = function(other) {
  *
  * Returns a new vector representing the shortest bounded path.
  */
-Vector.prototype.shortestBoundedPath = function(other, xBound, yBound) {
-  var shortest = this.subtract(other);
-  shortest.x = absMin(shortest.x, xBound - Math.abs(shortest.x));
-  shortest.y = absMin(shortest.y, yBound - Math.abs(shortest.y));
-  return shortest;
+Vector.prototype.shortestBoundedPathTo = function(other, xBound, yBound) {
+  var vector = other.subtract(this);
+  if (vector.x < 0) {
+    vector.x = absMin(vector.x, vector.x + xBound);
+  } else {
+    vector.x = absMin(vector.x, vector.x - xBound);
+  }
+  if (vector.y < 0) {
+    vector.y = absMin(vector.y, vector.y + yBound);
+  } else {
+    vector.y = absMin(vector.y, vector.y - yBound);
+  }
+  return vector;
 }
 
+/*
+ * Calculates the bounded distance between this vector and another. The area
+ * is bounded by [0, xBound] in the x-direction and [0, yBound] in the
+ * y-direction. Values wrap around at these boundaries.
+ *
+ * @param other - The vector to which to find the bounded distance.
+ * @param xBound - The upper bound in the x-direction.
+ * @param yBound - The upper bound in the y-direction.
+ *
+ * Returns a number representing the shortest distance between the two vectors.
+ */
 Vector.prototype.boundedDist = function(other, xBound, yBound) {
   var d = this.subtract(other).abs();
   d.x = Math.min(d.x, xBound - d.x);
@@ -102,10 +109,6 @@ Vector.prototype.len = function() {
 
 Vector.prototype.len2 = function() {
   return this.x * this.x + this.y * this.y;
-}
-
-Vector.prototype.dot = function(other) {
-  return this.x * other.x + this.y * other.y;
 }
 
 Vector.prototype.angle = function() {

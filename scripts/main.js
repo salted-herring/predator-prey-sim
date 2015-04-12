@@ -13,8 +13,8 @@ var config = {
     predatorSightDist: 200
   },
   predator: {
-    speed: 4.0,
-    number: 0,
+    speed: 2.5,
+    number: 1,
     killDist: 6.0,
     maxTurnAngle: 0.2
   },
@@ -23,47 +23,16 @@ var config = {
   }
 };
 
+/*
+ * Calculates the value with the least magnitude.
+ *
+ * @param a - The first value.
+ * @param b - The second value.
+ *
+ * Returns the value with the least magnitude.
+ */
 function absMin(a, b) {
   return Math.abs(a) < Math.abs(b) ? a : b;
-}
-
-function calcCenterOfMass(preyList) {
-  var centerOfMass = new Vector(0, 0);
-  preyList.forEach(function(prey) {
-    centerOfMass.add(prey.pos);
-  });
-  centerOfMass.scale(1 / preyList.length);
-  return centerOfMass;
-}
-
-function calcMeanHeading(preyList) {
-  var heading = new Vector(0, 0);
-  preyList.forEach(function(prey) {
-    heading = heading.add(prey.vel);
-  });
-  return heading;
-}
-
-function calcSeparations(boids) {
-  var dists = [];
-  for (var i = 0; i < boids.length; ++i) {
-    dists.push([]);
-    for (var j = 0; j < boids.length; ++j) {
-
-      // A boid shouldn't try to avoid itself.
-      if (i === j)
-        continue;
-
-      // Calculate such that resulting vector points away from the offending
-      // neighbour.
-      var d = boids[i].pos.shortestBoundedPath(boids[j].pos, config.env.screenWidth, config.env.screenHeight);
-
-      if (d.len2() < config.prey.minSeparation * config.prey.minSeparation) {
-        dists[i].push(d);
-      }
-    }
-  }
-  return dists;
 }
 
 function diffAngle(a, b) {
@@ -86,16 +55,18 @@ function drawLine(ctx, a, b) {
 
 function movePredators(predatorList, preyList) {
   predatorList.forEach(function(predator) {
-    predatorList.move(preyList);
+    predator.move(preyList, config);
   });
 }
 
 function movePrey(preyList, predators) {
-  var dists = calcSeparations(preyList);
+  //var dists = calcSeparations(preyList);
+  var neighbourDists = gaugeNeighbourDists(preyList, config);
   var meanHeading = calcMeanHeading(preyList);
-  var centerOfMass = calcCenterOfMass(preyList);
+  //var centerOfMass = calcCenterOfMass(preyList);
   preyList.forEach(function(prey, index) {
-    prey.move(predators, centerOfMass, meanHeading, dists[index], config);
+    prey.move(predators, neighbourDists.tooFar[index], meanHeading,
+        neighbourDists.tooClose[index], neighbourDists.dist[index], config);
   });
 }
 
