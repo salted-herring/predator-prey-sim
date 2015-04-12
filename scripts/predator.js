@@ -12,6 +12,14 @@ Predator.create = function(screenWidth, screenHeight) {
   return new Predator(new Vector(x, y), vel);
 }
 
+/*
+ * Finds the closest prey to this predator.
+ *
+ * @param preyList - The list of prey.
+ * @param config - Configuration options.
+ *
+ * Returns the index of the closest prey.
+ */
 Predator.prototype.findClosestPrey = function(preyList, config) {
   if (preyList.length === 0) {
     return -1;
@@ -20,8 +28,9 @@ Predator.prototype.findClosestPrey = function(preyList, config) {
   var closestIndex = -1;
   var closestDist = config.env.screen.len2();
   var predator = this;
+
   preyList.forEach(function(prey, index) {
-    var dist = predator.pos.boundedDist(prey.pos, config.env.screen.x, config.env.screen.y);
+    var dist = predator.pos.boundedDist(prey.pos, config.env.screen);
     if (dist < closestDist) {
       closestDist = dist;
       closestIndex = index;
@@ -30,7 +39,12 @@ Predator.prototype.findClosestPrey = function(preyList, config) {
   return closestIndex;
 }
 
-
+/*
+ * Moves the predator. The predator simply seeks the closest prey.
+ *
+ * @param preyList - The list of prey available.
+ * @param config - Configuration options.
+ */
 Predator.prototype.move = function(boids, config) {
   // If there are no prey left. just keep moving aimlessy.
   if (boids.length === 0) {
@@ -59,6 +73,8 @@ Predator.prototype.move = function(boids, config) {
   // Ensure turn angle does not exceed the max allowed value.
   dAngle = Math.min(dAngle, config.predator.maxTurnAngle);
 
+  // Determine which direction the predator should turn to get closest to its
+  // desired direction.
   if (diffAngle(vAngle + dAngle, mAngle) > diffAngle(vAngle - dAngle, mAngle)) {
     vAngle -= dAngle;
   } else {
@@ -72,7 +88,8 @@ Predator.prototype.move = function(boids, config) {
   this.pos = this.pos.add(this.vel).bound(config.env.screen);
 
   // Kill the prey if is has been caught by the predator.
-  if (this.pos.boundedDist(target.pos, config.env.screen.x, config.env.screen.y) < config.predator.killDist * config.predator.killDist) {
+  if (this.pos.boundedDist(target.pos, config.env.screen)
+      < config.predator.killDist * config.predator.killDist) {
     boids.splice(closestPreyIndex, 1);
     --config.prey.number;
   }
@@ -83,8 +100,7 @@ Predator.prototype.move = function(boids, config) {
  *
  * @ctx - The graphics context with which to draw.
  */
-Predator.prototype.draw = function(ctx) {
-  var angle = Math.atan2(this.vel.y, this.vel.x);
-  ctx.fillStyle = "red";
-  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, angle);
+Predator.prototype.draw = function(ctx, color) {
+  ctx.fillStyle = color;
+  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle());
 }

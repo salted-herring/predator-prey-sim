@@ -1,20 +1,51 @@
+/*
+ * Prey
+ *
+ * Prey like to form flocks. They follow some basic rules:
+ *   - Prey like to travel in the same direction as others.
+ *   - Prey like to be close to the rest of their flock.
+ *   - Prey try to avoid hitting others who are too close.
+ *   - Prey flee from predators who get too close.
+ */
 
+/*
+ * Prey constructor.
+ *
+ * @param position - The location of the prey.
+ * @param velocity - The velocity of the prey.
+ */
 function Boid(position, velocity) {
   this.pos = position;
   this.vel = velocity;
 }
 
-Boid.create = function(screenWidth, screenHeight) {
-  var x = Math.floor(Math.random() * screenWidth);
-  var y = Math.floor(Math.random() * screenHeight);
+/*
+ * Creates a new prey in a random location on the screen.
+ *
+ * @param config - Configuration options.
+ *
+ * Returns a new prey in a random location.
+ */
+Boid.create = function(config) {
+  var x = Math.floor(Math.random() * config.env.screen.x);
+  var y = Math.floor(Math.random() * config.env.screen.y);
   var vel = new Vector(Math.random(), Math.random());
   vel = vel.normalize().scale(config.prey.speed);
   return new Boid(new Vector(x, y), vel);
 }
 
+/*
+ * Finds the closest predator to this prey.
+ *
+ * @param predatorList - The list of predators.
+ * @param config - Configuration options.
+ *
+ * Returns the closest predator, or null if no predators are within a notable
+ * distance.
+ */
 Boid.prototype.findClosestPredator = function(predatorList, config) {
   if (predatorList.length === 0) {
-    return -1;
+    return null;
   }
 
   var closestIndex = -1;
@@ -22,7 +53,7 @@ Boid.prototype.findClosestPredator = function(predatorList, config) {
   var prey = this;
 
   predatorList.forEach(function(predator, index) {
-    var dist = prey.pos.boundedDist(predator.pos, config.env.screen.x, config.env.screen.y);
+    var dist = prey.pos.boundedDist(predator.pos, config.env.screen);
     if (dist < closestDist) {
       closestDist = dist;
       closestIndex = index;
@@ -32,12 +63,20 @@ Boid.prototype.findClosestPredator = function(predatorList, config) {
   // Check if the closest predator is actually within a distance that the prey
   // cares about.
   if (closestDist < config.prey.predatorSightDist * config.prey.predatorSightDist) {
-    return closestIndex;
+    return predatorList[closestIndex];
   } else {
-    return -1;
+    return null;
   }
 }
 
+/*
+ * Calculates the mean heading of the prey.
+ * The mean heading is simply the average direction that the prey are heading.
+ *
+ * @param preyList - The list of prey.
+ *
+ * Returns a Vector representing the average heading.
+ */
 function calcMeanHeading(preyList) {
   var heading = new Vector(0, 0);
   preyList.forEach(function(prey) {
@@ -68,9 +107,8 @@ function gaugeNeighbourDists(preyList, config) {
       }
 
       // Find the distance between the two prey.
-      var dist = prey.pos.boundedDist(neighbour.pos, config.env.screen.x,
-          config.env.screen.y);
-      neighbourDists.dist[i] += Math.sqrt(dist);
+      var dist = prey.pos.boundedDist(neighbour.pos, config.env.screen);
+        neighbourDists.dist[i] += Math.sqrt(dist);
 
       // If the neighbour is within the minimum separation distance,
       // a vector pointing away from it is added to the 'tooClose' list.
@@ -115,13 +153,11 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
 
   // Find the closest predator. If the closest predator is within a certain
   // range, the boid wants to escape.
-  var closestPredatorIndex = this.findClosestPredator(predators, config);
+  var closestPredator = this.findClosestPredator(predators, config);
   var closestPredatorVector = new Vector(0, 0);
 
-  // Check if the closest predator is within range to be noticed.
-  if (closestPredatorIndex !== -1) {
+  if (closestPredator) {
     // Create a vector pointing away from the predator.
-    var closestPredator = predators[closestPredatorIndex];
     closestPredatorVector = closestPredator.pos.shortestBoundedPathTo(this.pos,
         config.env.screen.x, config.env.screen.y);
 
@@ -135,7 +171,8 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
   }
 
   // Put everything together in one vector.
-  var changeVector = cohesionVector.add(alignmentVector).add(separationVector).add(closestPredatorVector).normalize();
+  var changeVector = cohesionVector.add(alignmentVector).add(separationVector)
+      .add(closestPredatorVector).normalize();
 
   var vAngle = this.vel.angle();
   var mAngle = changeVector.angle();
@@ -161,7 +198,7 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
  *
  * @ctx - The graphics context with which to draw.
  */
-Boid.prototype.draw = function(ctx) {
-  ctx.fillStyle = "black";
+Boid.prototype.draw = function(ctx, color) {
+  ctx.fillStyle = color;
   drawTriangle(ctx, this.pos.x, this.pos.y, 6, 4, this.vel.angle());
 }

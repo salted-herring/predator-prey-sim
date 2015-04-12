@@ -120,10 +120,13 @@ Vector.prototype.bound = function(bounds) {
  *
  * Returns a number representing the shortest distance between the two vectors.
  */
-Vector.prototype.boundedDist = function(other, xBound, yBound) {
+Vector.prototype.boundedDist = function(other, bounds) {
+  // First, find the absolute distance between the vectors.
   var d = this.subtract(other).abs();
-  d.x = Math.min(d.x, xBound - d.x);
-  d.y = Math.min(d.y, yBound - d.y);
+
+  // Check if the distances would be shorter if wrapped around the screen.
+  d.x = Math.min(d.x, bounds.x - d.x);
+  d.y = Math.min(d.y, bounds.y - d.y);
   return d.len2();
 }
 
