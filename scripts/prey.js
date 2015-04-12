@@ -8,8 +8,7 @@ Boid.create = function(screenWidth, screenHeight) {
   var x = Math.floor(Math.random() * screenWidth);
   var y = Math.floor(Math.random() * screenHeight);
   var vel = new Vector(Math.random(), Math.random());
-  vel.normalize();
-  vel.scale(config.prey.speed);
+  vel = vel.normalize().scale(config.prey.speed);
   return new Boid(new Vector(x, y), vel);
 }
 
@@ -44,8 +43,7 @@ function calcMeanHeading(preyList) {
   preyList.forEach(function(prey) {
     heading = heading.add(prey.vel);
   });
-  heading.normalize();
-  return heading;
+  return heading.normalize();
 }
 
 function gaugeNeighbourDists(preyList, config) {
@@ -81,13 +79,11 @@ function gaugeNeighbourDists(preyList, config) {
       if (dist < config.prey.minSeparation * config.prey.minSeparation) {
         var path = neighbour.pos.shortestBoundedPathTo(prey.pos, config.env.screen.x,
             config.env.screen.y);
-        path.normalize();
-        neighbourDists.tooClose[i].push(path);
+        neighbourDists.tooClose[i].push(path.normalize());
       } else {
         var path = prey.pos.shortestBoundedPathTo(neighbour.pos, config.env.screen.x,
             config.env.screen.y);
-        path.normalize();
-        neighbourDists.tooFar[i].push(path);
+        neighbourDists.tooFar[i].push(path.normalize());
       }
     });
     neighbourDists.dist[i] /= preyList.length;
@@ -102,19 +98,11 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
     tooFar.forEach(function(path) {
       cohesionVector = cohesionVector.add(path);
     });
-    /*
-    var a = cohesionVector.len2();
-    var b = a / (100 * 100); // Past 100, the prey is at full weighting for this vector.
-    b = Math.min(b, 1);
-    */
-    cohesionVector.normalize();
-    cohesionVector.scale(config.weights.cohesion);
+    cohesionVector = cohesionVector.normalize().scale(config.weights.cohesion);
   }
 
   // Calculate the heading vector.
-  var alignmentVector = meanHeading;//meanHeading.subtract(this.vel);
-  alignmentVector.normalize();
-  alignmentVector.scale(config.weights.alignment);
+  var alignmentVector = meanHeading.normalize().scale(config.weights.alignment);
 
   // Calculate the separation vector. Currently all boids within the
   // separation radius are treated equally: is not a continuous function of
@@ -123,8 +111,7 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
   tooClose.forEach(function(path) {
     separationVector = separationVector.add(path);
   });
-  separationVector.normalize();
-  separationVector.scale(config.weights.separation);
+  separationVector = separationVector.normalize().scale(config.weights.separation);
 
   // Find the closest predator. If the closest predator is within a certain
   // range, the boid wants to escape.
@@ -135,19 +122,20 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
   if (closestPredatorIndex !== -1) {
     // Create a vector pointing away from the predator.
     var closestPredator = predators[closestPredatorIndex];
-    closestPredatorVector = this.pos.subtract(closestPredator.pos);
+    closestPredatorVector = closestPredator.pos.shortestBoundedPathTo(this.pos,
+        config.env.screen.x, config.env.screen.y);
 
     // Scale the weighting linearly as a function of length.
     var pDist = closestPredatorVector.len2();
-    var nFactor = pDist / (config.prey.predatorSightDist * config.prey.predatorSightDist);
+    var nFactor = pDist / (config.prey.predatorSightDist
+        * config.prey.predatorSightDist);
     var sFactor = 1 - nFactor;
-    closestPredatorVector.normalize();
-    closestPredatorVector.scale(config.weights.flee * sFactor);
+    closestPredatorVector = closestPredatorVector.normalize()
+        .scale(config.weights.flee * sFactor);
   }
 
   // Put everything together in one vector.
-  var changeVector = cohesionVector.add(alignmentVector).add(separationVector).add(closestPredatorVector);
-  changeVector.normalize();
+  var changeVector = cohesionVector.add(alignmentVector).add(separationVector).add(closestPredatorVector).normalize();
 
   var vAngle = this.vel.angle();
   var mAngle = changeVector.angle();
@@ -162,10 +150,10 @@ Boid.prototype.move = function(predators, tooFar, meanHeading, tooClose, dist, c
   }
 
   this.vel = new Vector(Math.cos(vAngle), Math.sin(vAngle));
-  this.vel.scale(config.prey.speed);
+  this.vel = this.vel.scale(config.prey.speed);
 
   // Bound the boid so that it stays on the screen.
-  this.pos = this.pos.add(this.vel).bound(config.env.screen.x, config.env.screen.y);
+  this.pos = this.pos.add(this.vel).bound(config.env.screen);
 }
 
 /*

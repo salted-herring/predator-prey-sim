@@ -8,8 +8,7 @@ Predator.create = function(screenWidth, screenHeight) {
   var x = Math.floor(Math.random() * screenWidth);
   var y = Math.floor(Math.random() * screenHeight);
   var vel = new Vector(Math.random(), Math.random());
-  vel.normalize();
-  vel.scale(config.predator.speed);
+  vel = vel.normalize().scale(config.predator.speed);
   return new Predator(new Vector(x, y), vel);
 }
 
@@ -35,7 +34,7 @@ Predator.prototype.findClosestPrey = function(preyList, config) {
 Predator.prototype.move = function(boids, config) {
   // If there are no prey left. just keep moving aimlessy.
   if (boids.length === 0) {
-    this.pos = this.pos.add(this.vel).bound(config.env.screen.x, config.env.screen.y);
+    this.pos = this.pos.add(this.vel).bound(config.env.screen);
     return;
   }
 
@@ -43,7 +42,8 @@ Predator.prototype.move = function(boids, config) {
   var target = boids[closestPreyIndex];
 
   // Find the shortest path to the target prey.
-  var movementVector = this.pos.shortestBoundedPathTo(target.pos,
+  var movementVector = this.pos.shortestBoundedPathTo(
+      target.pos,
       config.env.screen.x, config.env.screen.y);
 
   // Draw a line from this predator to targeted prey.
@@ -66,10 +66,10 @@ Predator.prototype.move = function(boids, config) {
   }
 
   this.vel = new Vector(Math.cos(vAngle), Math.sin(vAngle));
-  this.vel.scale(config.predator.speed);
+  this.vel = this.vel.scale(config.predator.speed);
 
   // Bound the predator so that it stays on the screen.
-  this.pos = this.pos.add(this.vel).bound(config.env.screenWidth, config.env.screenHeight);
+  this.pos = this.pos.add(this.vel).bound(config.env.screen);
 
   // Kill the prey if is has been caught by the predator.
   if (this.pos.boundedDist(target.pos, config.env.screen.x, config.env.screen.y) < config.predator.killDist * config.predator.killDist) {
