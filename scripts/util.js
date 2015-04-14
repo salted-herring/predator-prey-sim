@@ -41,7 +41,8 @@ function diffAngle(a, b) {
  * @param b - The second vector.
  * @param color - The color in which to draw the line.
  */
-function drawLine(ctx, a, b) {
+function drawLine(ctx, a, b, color) {
+  ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(a.x, a.y);
   ctx.lineTo(b.x, b.y);

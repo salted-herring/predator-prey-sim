@@ -4,11 +4,18 @@ function Predator(position, velocity) {
   this.vel = velocity;
 }
 
-Predator.create = function(screenWidth, screenHeight) {
-  var x = Math.floor(Math.random() * screenWidth);
-  var y = Math.floor(Math.random() * screenHeight);
+/*
+ * Creates a new predator in a random location on the screen.
+ *
+ * @param config - Configuration options.
+ *
+ * Returns a new predator in a random location.
+ */
+Predator.create = function(speed, screen) {
+  var x = Math.floor(Math.random() * screen.x);
+  var y = Math.floor(Math.random() * screen.y);
   var vel = new Vector(Math.random(), Math.random());
-  vel = vel.normalize().scale(config.predator.speed);
+  vel = vel.normalize().scale(speed);
   return new Predator(new Vector(x, y), vel);
 }
 
@@ -20,17 +27,17 @@ Predator.create = function(screenWidth, screenHeight) {
  *
  * Returns the index of the closest prey.
  */
-Predator.prototype.findClosestPrey = function(preyList, config) {
+Predator.prototype.findClosestPrey = function(preyList, screen) {
   if (preyList.length === 0) {
     return -1;
   }
 
   var closestIndex = -1;
-  var closestDist = config.env.screen.len2();
+  var closestDist = screen.len2();
   var predator = this;
 
   preyList.forEach(function(prey, index) {
-    var dist = predator.pos.boundedDist(prey.pos, config.env.screen);
+    var dist = predator.pos.boundedDist(prey.pos, screen);
     if (dist < closestDist) {
       closestDist = dist;
       closestIndex = index;
@@ -44,25 +51,26 @@ Predator.prototype.findClosestPrey = function(preyList, config) {
  *
  * @param preyList - The list of prey available.
  * @param config - Configuration options.
+ *
+ * Returns the number of prey remaining in the prey list.
  */
-Predator.prototype.move = function(boids, config) {
+Predator.prototype.move = function(preyList, speed, maxTurnAngle, killDist,
+    ctx, screen) {
   // If there are no prey left. just keep moving aimlessy.
-  if (boids.length === 0) {
-    this.pos = this.pos.add(this.vel).bound(config.env.screen);
+  if (preyList.length === 0) {
+    this.pos = this.pos.add(this.vel).bound(screen);
     return;
   }
 
-  var closestPreyIndex = this.findClosestPrey(boids, config);
-  var target = boids[closestPreyIndex];
+  var closestPreyIndex = this.findClosestPrey(preyList, screen);
+  var target = preyList[closestPreyIndex];
 
   // Find the shortest path to the target prey.
-  var movementVector = this.pos.shortestBoundedPathTo(
-      target.pos,
-      config.env.screen.x, config.env.screen.y);
+  var movementVector = this.pos.shortestBoundedPathTo(target.pos, screen.x,
+      screen.y);
 
   // Draw a line from this predator to targeted prey.
-  config.env.ctx.strokeStyle="#aaa";
-  drawLine(config.env.ctx, this.pos, target.pos);
+  drawLine(ctx, this.pos, target.pos, '#aaa');
 
   var vAngle = this.vel.angle();
   var mAngle = movementVector.angle();
@@ -71,7 +79,7 @@ Predator.prototype.move = function(boids, config) {
   var dAngle = diffAngle(mAngle, vAngle);
 
   // Ensure turn angle does not exceed the max allowed value.
-  dAngle = Math.min(dAngle, config.predator.maxTurnAngle);
+  dAngle = Math.min(dAngle, maxTurnAngle);
 
   // Determine which direction the predator should turn to get closest to its
   // desired direction.
@@ -82,17 +90,16 @@ Predator.prototype.move = function(boids, config) {
   }
 
   this.vel = new Vector(Math.cos(vAngle), Math.sin(vAngle));
-  this.vel = this.vel.scale(config.predator.speed);
+  this.vel = this.vel.scale(speed);
 
   // Bound the predator so that it stays on the screen.
-  this.pos = this.pos.add(this.vel).bound(config.env.screen);
+  this.pos = this.pos.add(this.vel).bound(screen);
 
   // Kill the prey if is has been caught by the predator.
-  if (this.pos.boundedDist(target.pos, config.env.screen)
-      < config.predator.killDist * config.predator.killDist) {
-    boids.splice(closestPreyIndex, 1);
-    --config.prey.number;
+  if (this.pos.boundedDist(target.pos, screen) < killDist * killDist) {
+    preyList.splice(closestPreyIndex, 1);
   }
+  return preyList.length;
 }
 
 /*
