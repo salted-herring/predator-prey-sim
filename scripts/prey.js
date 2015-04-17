@@ -90,7 +90,7 @@ function calcMeanHeading(preyList) {
   return heading.normalize();
 }
 
-function gaugeNeighbourDists(preyList, screen) {
+function gaugeNeighbourDists(preyList, minSeparation, screen) {
   // Prey are difficult to satisfy: they want to be close to each
   // other in a flock, but not so close as to risk hitting each
   // other.
@@ -121,7 +121,7 @@ function gaugeNeighbourDists(preyList, screen) {
       // it is added to the 'tooFar' list.
       if (dist < config.prey.minSeparation * config.prey.minSeparation) {
         var path = neighbour.pos.shortestBoundedPathTo(prey.pos, screen.x, screen.y);
-        neighbourDists.tooClose[i].push(path.normalize());
+        neighbourDists.tooClose[i].push(path.reverseLinearNormalize(0, minSeparation));
       } else {
         var path = prey.pos.shortestBoundedPathTo(neighbour.pos, screen.x, screen.y);
         neighbourDists.tooFar[i].push(path.normalize());
@@ -167,11 +167,8 @@ Prey.prototype.move = function(predators, maxTurnAngle, predatorSightDist,
         screen.x, screen.y);
 
     // Scale the weighting linearly as a function of length.
-    var pDist = closestPredatorVector.len2();
-    var nFactor = pDist / (predatorSightDist * predatorSightDist);
-    var sFactor = 1 - nFactor;
-    closestPredatorVector = closestPredatorVector.normalize()
-        .scale(weights.flee * sFactor);
+    closesetPreadatorVector = closestPredatorVector
+        .reverseLinearNormalize(0, predatorSightDist).scale(weights.flee);
   }
 
   // Put everything together in one vector.

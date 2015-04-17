@@ -2,10 +2,33 @@
 <html>
   <head>
     <title>Predator Prey Simulation</title>
+    <style>
+      input {
+        display: block;
+      }
+    </style>
   </head>
   <body>
-    <h1>Predator Prey Simulation</h1>
-    <canvas id="boidsCanvas" width="500" height="500" style="border:1px solid #000"></canvas>
+    <div style="width: 500px">
+      <h1>Predator Prey Simulation</h1>
+      <canvas id="boidsCanvas" width="500" height="500" style="border:1px solid #000"></canvas>
+      <div>
+        <div style="float: left">
+          <div id="weights">
+            <h3>Weights</h3>
+          </div>
+        </div>
+        <div style="float: right">
+          <div id="prey">
+            <h3>Prey Attributes</h3>
+          </div>
+          <div id="predators">
+            <h3>Predator Attributes</h3>
+          </div>
+        </div>
+      </div>
+    </div>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.3/jquery.min.js'></script>
     <script src="scripts/util.js"></script>
     <script src="scripts/vector.js"></script>
     <script src="scripts/prey.js"></script>

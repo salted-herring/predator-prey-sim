@@ -1,5 +1,16 @@
 var limits = {
-
+  weights: {
+    separation: { min: 0, max: 10 },
+    alignment:  { min: 0, max: 10 },
+    cohesion:   { min: 0, max: 10 },
+    flee:       { min: 0, max: 10 }
+  },
+  prey: {
+    speed: { min: 0.0, max: 10.0 }
+  },
+  predator: {
+    speed: { min: 0.0, max: 10.0 }
+  }
 };
 
 /*
@@ -51,7 +62,8 @@ function movePredators(predatorList, preyList) {
  * @param predatorList - List of predators to avoid.
  */
 function movePrey(preyList, predatorList) {
-  var neighbourDists = gaugeNeighbourDists(preyList, config.env.screen);
+  var neighbourDists = gaugeNeighbourDists(preyList, config.prey.minSeparation,
+      config.env.screen);
   var meanHeading = calcMeanHeading(preyList);
   preyList.forEach(function(prey, index) {
     prey.move(predatorList, config.prey.maxTurnAngle,
@@ -119,10 +131,21 @@ function loop(ctx, preyList, predatorList) {
   move(preyList, predatorList);
 }
 
+function pause() {
+  clearInterval(config.env.interval);
+  config.env.interval = null;
+}
+
+function play() {
+  config.env.interval = setInterval(function() {
+    loop(config.env.ctx, config.preyList, config.predatorList)
+  }, config.env.delay);
+}
+
 /*
  * Program set up and launch.
  */
-function main() {
+function run() {
   var canvas = document.getElementById('boidsCanvas');
   var ctx = canvas.getContext('2d');
 
@@ -132,9 +155,61 @@ function main() {
   config.env.screen = new Vector(canvas.width, canvas.height);
 
   var creatures = init();
-  setInterval(function() {
+  config.preyList = creatures.prey;
+  config.predatorList = creatures.predators;
+
+  config.env.interval = setInterval(function() {
     loop(ctx, creatures.prey, creatures.predators)
   }, config.env.delay);
 }
 
-main();
+/*
+ * Sets up the sliders, which control different parameters in the simulation.
+ *
+ * @param block - The block in which the slider should be placed.
+ * @param limits - The limits object bounded the slider.
+ * @param config - The config object that gives the value of each slider.
+ */
+function setupSliders(block, limits, config) {
+  for (attr in limits) {
+    // Label for the slider.
+    var name = attr.charAt(0).toUpperCase() + attr.slice(1);
+    var label = $('<label for="slider-' + attr + '">' + name + '</label>');
+
+    // Create the slider.
+    var min = limits[attr].min;
+    var max = limits[attr].max;
+    var val = config[attr];
+    var slider = $('<input id="slider-' + attr + '" type="range" min="' + min
+        + '" max="' + max + '" value="' + val + '">');
+
+    // Add event listener for input events on the slider.
+    slider.on('input', '', attr, function(e) {
+      var attr = e.data;
+      config[attr] = this.value;
+      console.log(attr + ' = ' + this.value);
+    });
+
+    // Add the label and slider to the block.
+    block.append(label);
+    block.append(slider);
+  }
+}
+
+// Set up sliders for changing values.
+$(document).ready(function() {
+  setupSliders($('#weights'), limits.weights, config.weights);
+  setupSliders($('#prey'), limits.prey, config.prey);
+  setupSliders($('#predators'), limits.predator, config.predator);
+
+  var canvas = $('#boidsCanvas');
+  canvas.on('click', function() {
+    if (config.env.interval) {
+      pause();
+    } else {
+      play();
+    }
+  });
+
+  run();
+});

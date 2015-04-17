@@ -154,3 +154,38 @@ Vector.prototype.shortestBoundedPathTo = function(other, xBound, yBound) {
   }
   return vector;
 }
+
+/*
+ * Normalizes and scales this vector so that its length lies between 0 and 1.
+ * If the length of this vector is lower, the length of the linearized vector
+ * will be 0. If the length of this vector is upper, the lenght of the
+ * linearized vector will be 1.
+ *
+ * @param lower - The lower bound to scale between.
+ * @param upper - The upper bound to scale between.
+ *
+ * Returns a vector with same directon as this one, scaled between 0 and 1.
+ */
+Vector.prototype.linearNormalize = function(lower, upper) {
+  var len = this.len();
+  var scaleFactor = (len - lower) / (upper - lower);
+  return this.normalize().scale(scaleFactor);
+}
+
+/*
+ * Normalizes and scales this vector so that its length lies between 0 and 1.
+ * If the length of this vector is lower, the length of the linearized vector
+ * will be 1. If the length of this vector is upper, the lenght of the
+ * linearized vector will be 0. This is the reverse of the linearNormalize
+ * method.
+ *
+ * @param lower - The lower bound to scale between.
+ * @param upper - The upper bound to scale between.
+ *
+ * Returns a vector with same directon as this one, scaled between 0 and 1.
+ */
+Vector.prototype.reverseLinearNormalize = function(lower, upper) {
+  var len = this.len();
+  var scaleFactor = (len - lower) / (upper - lower);
+  return this.normalize().scale(1 - scaleFactor);
+}
