@@ -33,6 +33,27 @@ function diffAngle(a, b) {
   return Math.abs(c);
 }
 
+function turn(currentHeading, desiredHeading, maxTurnAngle) {
+  var currentAngle = currentHeading.angle();
+  var desiredAngle = desiredHeading.angle();
+
+  // Get the absolute difference in angle.
+  var deltaAngle = diffAngle(currentAngle, desiredAngle);
+
+  // Ensure delta angle does not exceed the max allowed value.
+  deltaAngle = Math.min(deltaAngle, maxTurnAngle);
+
+  // Determine which direction the predator should turn to get closest to its
+  // desired direction.
+  if (diffAngle(currentAngle + deltaAngle, desiredAngle)
+      > diffAngle(currentAngle - deltaAngle, desiredAngle)) {
+    currentAngle -= deltaAngle;
+  } else {
+    currentAngle += deltaAngle;
+  }
+  return currentAngle;
+}
+
 /*
  * Draws a line between two vectors, a and b.
  *

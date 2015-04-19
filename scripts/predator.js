@@ -72,34 +72,19 @@ Predator.prototype.move = function(preyList, speed, maxTurnAngle, killDist,
   // Draw a line from this predator to targeted prey.
   drawLine(ctx, this.pos, target.pos, '#aaa');
 
-  var vAngle = this.vel.angle();
-  var mAngle = movementVector.angle();
-
-  // Get the absolute difference in angle.
-  var dAngle = diffAngle(mAngle, vAngle);
-
-  // Ensure turn angle does not exceed the max allowed value.
-  dAngle = Math.min(dAngle, maxTurnAngle);
-
-  // Determine which direction the predator should turn to get closest to its
-  // desired direction.
-  if (diffAngle(vAngle + dAngle, mAngle) > diffAngle(vAngle - dAngle, mAngle)) {
-    vAngle -= dAngle;
-  } else {
-    vAngle += dAngle;
-  }
-
-  this.vel = new Vector(Math.cos(vAngle), Math.sin(vAngle));
+  // Calculate the new velocity of the predator.
+  var turnAngle = turn(this.vel, movementVector, maxTurnAngle);
+  this.vel = new Vector(Math.cos(turnAngle), Math.sin(turnAngle));
   this.vel = this.vel.scale(speed);
 
-  // Bound the predator so that it stays on the screen.
+  // Update the predator's position and bound it so that it stays on the
+  // screen.
   this.pos = this.pos.add(this.vel).bound(screen);
 
   // Kill the prey if is has been caught by the predator.
   if (this.pos.boundedDist(target.pos, screen) < killDist * killDist) {
     preyList.splice(closestPreyIndex, 1);
   }
-  return preyList.length;
 }
 
 /*

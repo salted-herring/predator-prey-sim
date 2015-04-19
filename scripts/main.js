@@ -28,7 +28,8 @@ var config = {
     number: 20,
     maxTurnAngle: 0.1,
     minSeparation: 25.0,
-    predatorSightDist: 200
+    predatorSightDist: 200,
+    minFlockDist: 80
   },
   predator: {
     speed: 2.5,
@@ -69,7 +70,7 @@ function movePrey(preyList, predatorList) {
     prey.move(predatorList, config.prey.maxTurnAngle,
         config.prey.predatorSightDist, neighbourDists.tooFar[index],
         meanHeading, neighbourDists.tooClose[index], neighbourDists.dist[index],
-        config.env.screen, config.weights);
+        config.prey.minFlockDist, config.env.screen, config.weights);
   });
 }
 
@@ -211,5 +212,11 @@ $(document).ready(function() {
     }
   });
 
-  run();
+  var launch = $('#launch');
+  launch.on('click', function() {
+    config.prey.number = $('#numPrey').val();
+    config.predator.number = $('#numPredators').val();
+    pause();
+    run();
+  });
 });

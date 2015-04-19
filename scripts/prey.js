@@ -133,10 +133,11 @@ function gaugeNeighbourDists(preyList, minSeparation, screen) {
 }
 
 Prey.prototype.move = function(predators, maxTurnAngle, predatorSightDist,
-    tooFar, meanHeading, tooClose, dist, screen, weights) {
+    tooFar, meanHeading, tooClose, dist, minFlockDist, screen, weights) {
+
   // Calculate the cohesion vector.
   var cohesionVector = new Vector(0, 0);
-  if (dist > 50) {
+  if (dist > minFlockDist) {
     tooFar.forEach(function(path) {
       cohesionVector = cohesionVector.add(path);
     });
@@ -175,22 +176,12 @@ Prey.prototype.move = function(predators, maxTurnAngle, predatorSightDist,
   var changeVector = cohesionVector.add(alignmentVector).add(separationVector)
       .add(closestPredatorVector).normalize();
 
-  var vAngle = this.vel.angle();
-  var mAngle = changeVector.angle();
-
-  var dAngle = diffAngle(mAngle, vAngle);
-  dAngle = Math.min(dAngle, maxTurnAngle);
-
-  if (diffAngle(vAngle + dAngle, mAngle) > diffAngle(vAngle - dAngle, mAngle)) {
-    vAngle -= dAngle;
-  } else {
-    vAngle += dAngle;
-  }
-
-  this.vel = new Vector(Math.cos(vAngle), Math.sin(vAngle));
+  // Update the velocity of the prey.
+  var turnAngle = turn(this.vel, changeVector, maxTurnAngle);
+  this.vel = new Vector(Math.cos(turnAngle), Math.sin(turnAngle));
   this.vel = this.vel.scale(config.prey.speed);
 
-  // Bound the prey so that it stays on the screen.
+  // Update the prey's position and bound it so that it stays on the screen.
   this.pos = this.pos.add(this.vel).bound(screen);
 }
 
