@@ -1,5 +1,5 @@
 # Predator Prey Simulation
-Simulates a flock of birds, similar to the artificial life program [Boids][http://en.wikipedia.org/wiki/Boids]. This simulation also introduces a 'predator': a specific type of boid that hunts others, which are known as the 'prey'.
+Simulates a flock of birds, similar to the artificial life program [Boids](http://en.wikipedia.org/wiki/Boids). This simulation also introduces a 'predator': a specific type of boid that hunts others, which are known as the 'prey'. Try the simulation [here](http://adamheins.github.io/predator-prey-sim/).
 
 ## Behaviour
 The prey move based on a number of rules:
