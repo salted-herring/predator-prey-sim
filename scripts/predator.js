@@ -1,4 +1,16 @@
+/*
+ * Predator
+ *
+ * Predators hunt prey. Predators really only follow a single rule:
+ *    - Chase (and kill, if opportunity presents itself), the closest prey.
+ */
 
+/*
+ * Predator constructor.
+ *
+ * @param position - The initial position of the predator.
+ * @param velocity - The initial velocity of the predator.
+ */
 function Predator(position, velocity) {
   this.pos = position;
   this.vel = velocity;
@@ -7,13 +19,14 @@ function Predator(position, velocity) {
 /*
  * Creates a new predator in a random location on the screen.
  *
- * @param config - Configuration options.
+ * @param speed - The speed of the predator.
+ * @param bounds - The upper bounds within which the prey are to be generated.
  *
  * Returns a new predator in a random location.
  */
-Predator.create = function(speed, screen) {
-  var x = Math.floor(Math.random() * screen.x);
-  var y = Math.floor(Math.random() * screen.y);
+Predator.create = function(speed, bounds) {
+  var x = Math.floor(Math.random() * bounds.x);
+  var y = Math.floor(Math.random() * bounds.y);
   var vel = new Vector(Math.random(), Math.random());
   vel = vel.normalize().scale(speed);
   return new Predator(new Vector(x, y), vel);
@@ -23,16 +36,16 @@ Predator.create = function(speed, screen) {
  * Finds the closest prey to this predator.
  *
  * @param preyList - The list of prey.
- * @param config - Configuration options.
+ * @param screen - A vector representing the screen dimensions.
  *
  * Returns the index of the closest prey.
  */
 Predator.prototype.findClosestPrey = function(preyList, screen) {
   if (preyList.length === 0) {
-    return -1;
+    return null;
   }
 
-  var closestIndex = -1;
+  var closestIndex = null;
   var closestDist = screen.len2();
   var predator = this;
 
@@ -50,12 +63,16 @@ Predator.prototype.findClosestPrey = function(preyList, screen) {
  * Moves the predator. The predator simply seeks the closest prey.
  *
  * @param preyList - The list of prey available.
- * @param config - Configuration options.
- *
- * Returns the number of prey remaining in the prey list.
+ * @param speed - The speed of the predator.
+ * @param maxTurnAngle - The maximum turn angle of the predator.
+ * @param killDist - The distance within which a predator must be of a prey
+ *     to kill the prey.
+ * @param ctx - The graphics context.
+ * @param screen - A vector representing the screen dimensions.
  */
 Predator.prototype.move = function(preyList, speed, maxTurnAngle, killDist,
     ctx, screen) {
+
   // If there are no prey left. just keep moving aimlessy.
   if (preyList.length === 0) {
     this.pos = this.pos.add(this.vel).bound(screen);
@@ -90,9 +107,9 @@ Predator.prototype.move = function(preyList, speed, maxTurnAngle, killDist,
 /*
  * Draws a predator.
  *
- * @ctx - The graphics context with which to draw.
+ * @param ctx - The graphics context with which to draw.
+ * @param color - The color with which to draw the predator.
  */
 Predator.prototype.draw = function(ctx, color) {
-  ctx.fillStyle = color;
-  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle());
+  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle(), color);
 }

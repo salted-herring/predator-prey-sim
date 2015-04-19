@@ -1,3 +1,7 @@
+/*
+ * Min and max limits for configurable properties. These properties are the
+ * ones which can be changed by the user while the simulation is running.
+ */
 var limits = {
   weights: {
     separation: { min: 0, max: 10 },
@@ -14,7 +18,7 @@ var limits = {
 };
 
 /*
- * Configurable options for the simulation.
+ * Configuration options for the simulation.
  */
 var config = {
   weights : {
@@ -63,7 +67,7 @@ function movePredators(predatorList, preyList) {
  * @param predatorList - List of predators to avoid.
  */
 function movePrey(preyList, predatorList) {
-  var neighbourDists = gaugeNeighbourDists(preyList, config.prey.minSeparation,
+  var neighbourDists = calcNeighbourDists(preyList, config.prey.minSeparation,
       config.env.screen);
   var meanHeading = calcMeanHeading(preyList);
   preyList.forEach(function(prey, index) {
@@ -80,12 +84,14 @@ function movePrey(preyList, predatorList) {
 function init() {
   var prey = [];
   var predators = [];
+
   for (var i = 0; i < config.prey.number; ++i) {
     prey.push(Prey.create(config.prey.speed, config.env.screen));
   }
   for (var i = 0; i < config.predator.number; ++i) {
     predators.push(Predator.create(config.predator.speed, config.env.screen));
   }
+
   return {
     prey: prey,
     predators: predators
@@ -97,14 +103,14 @@ function init() {
  *
  * @ctx - The graphics context with which to draw.
  * @preyList - The list of prey.
- * @predators - The list of predators.
+ * @predatorList - The list of predators.
  */
-function render(ctx, preyList, predators) {
-  ctx.clearRect(0, 0, config.env.screenWidth, config.env.screenHeight);
+function render(ctx, preyList, predatorList) {
+  ctx.clearRect(0, 0, config.env.screen.x, config.env.screen.y);
   preyList.forEach(function(prey) {
     prey.draw(ctx, 'black');
   });
-  predators.forEach(function(predator) {
+  predatorList.forEach(function(predator) {
     predator.draw(ctx, 'red');
   });
 }
@@ -132,11 +138,17 @@ function loop(ctx, preyList, predatorList) {
   move(preyList, predatorList);
 }
 
+/*
+ * Pause the simulation.
+ */
 function pause() {
   clearInterval(config.env.interval);
   config.env.interval = null;
 }
 
+/*
+ * Play the simulation.
+ */
 function play() {
   config.env.interval = setInterval(function() {
     loop(config.env.ctx, config.preyList, config.predatorList)
@@ -147,7 +159,7 @@ function play() {
  * Program set up and launch.
  */
 function run() {
-  var canvas = document.getElementById('boidsCanvas');
+  var canvas = document.getElementById('simCanvas');
   var ctx = canvas.getContext('2d');
 
   config.env.screenWidth = canvas.width;
@@ -155,13 +167,12 @@ function run() {
   config.env.ctx = ctx;
   config.env.screen = new Vector(canvas.width, canvas.height);
 
+  // Initialize the prey and predators.
   var creatures = init();
   config.preyList = creatures.prey;
   config.predatorList = creatures.predators;
 
-  config.env.interval = setInterval(function() {
-    loop(ctx, creatures.prey, creatures.predators)
-  }, config.env.delay);
+  play();
 }
 
 /*
@@ -203,7 +214,8 @@ $(document).ready(function() {
   setupSliders($('#prey'), limits.prey, config.prey);
   setupSliders($('#predators'), limits.predator, config.predator);
 
-  var canvas = $('#boidsCanvas');
+  // Configure canvas to play/pause the simulation when clicked.
+  var canvas = $('#simCanvas');
   canvas.on('click', function() {
     if (config.env.interval) {
       pause();
@@ -212,6 +224,7 @@ $(document).ready(function() {
     }
   });
 
+  // Configure the launch button.
   var launch = $('#launch');
   launch.on('click', function() {
     config.prey.number = $('#numPrey').val();

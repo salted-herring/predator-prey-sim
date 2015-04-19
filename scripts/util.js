@@ -33,6 +33,17 @@ function diffAngle(a, b) {
   return Math.abs(c);
 }
 
+/*
+ * Calculates the new heading angle based on the current heading,
+ * the desired heading, and the maximum turn angle.
+ *
+ * @param currentHeading - The current heading vector.
+ * @param desiredHeading - The desired heading vector. The heading angle tends
+ *     toward this angle.
+ * @param maxTurnAngle - The maximum angle than can be turned at once.
+ *
+ * Returns the updated angle of the heading.
+ */
 function turn(currentHeading, desiredHeading, maxTurnAngle) {
   var currentAngle = currentHeading.angle();
   var desiredAngle = desiredHeading.angle();
@@ -81,8 +92,10 @@ function drawLine(ctx, a, b, color) {
  * @param distBackward - The distance between the center point and the back
  *     two points of the triangle.
  * @param angle - The orientation angle.
+ * @param color - The color of the triangle.
  */
-function drawTriangle(ctx, x, y, distForward, distBackward, angle) {
+function drawTriangle(ctx, x, y, distForward, distBackward, angle, color) {
+  ctx.fillStyle = color;
   ctx.beginPath();
   ctx.moveTo(x + distForward * Math.cos(angle),
       y + distForward * Math.sin(angle));

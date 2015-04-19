@@ -11,8 +11,8 @@
 /*
  * Prey constructor.
  *
- * @param position - The location of the prey.
- * @param velocity - The velocity of the prey.
+ * @param position - The initial location of the prey.
+ * @param velocity - The initial velocity of the prey.
  */
 function Prey(position, velocity) {
   this.pos = position;
@@ -22,9 +22,10 @@ function Prey(position, velocity) {
 /*
  * Creates a new prey in a random location on the screen.
  *
- * @param config - Configuration options.
+ * @param speed - The speed of the prey.
+ * @param bounds - The upper bounds within which the prey are to be generated.
  *
- * Returns a new prey in a random location.
+ * Returns a new prey in a random location within the bounds.
  */
 Prey.create = function(speed, bounds) {
   // Generate a random position for the prey.
@@ -42,7 +43,9 @@ Prey.create = function(speed, bounds) {
  * Finds the closest predator to this prey.
  *
  * @param predatorList - The list of predators.
- * @param config - Configuration options.
+ * @param predatorSightDist - The maximum distance within which a prey can see
+ *     a predator.
+ * @param screen - A vector representing the dimensions of the screen.
  *
  * Returns the closest predator, or null if no predators are within a notable
  * distance.
@@ -53,7 +56,7 @@ Prey.prototype.findClosestPredator = function(predatorList, predatorSightDist,
     return null;
   }
 
-  var closestIndex = -1;
+  var closestIndex = null;
   var closestDist = screen.len2();
   var prey = this;
 
@@ -90,7 +93,21 @@ function calcMeanHeading(preyList) {
   return heading.normalize();
 }
 
-function gaugeNeighbourDists(preyList, minSeparation, screen) {
+/*
+ * Calculate the distance from this prey to each of its neighbours.
+ * The neighbours are sorted into two categories: those which are too close,
+ * and those which are too far.
+ *
+ * @param preyList - The list of prey.
+ * @param minSeparation - The minimum distance that prey require between each
+ *     other to avoid collisions.
+ * @param screen - A vector representing the dimensions of the screen.
+ *
+ * Returns an object containing vectors pointing away from neighbours who are
+ * too close, vectors pointing toward prey that are too far, and the average
+ * distance from this prey to the rest of its neighbours.
+ */
+function calcNeighbourDists(preyList, minSeparation, screen) {
   // Prey are difficult to satisfy: they want to be close to each
   // other in a flock, but not so close as to risk hitting each
   // other.
@@ -132,7 +149,27 @@ function gaugeNeighbourDists(preyList, minSeparation, screen) {
   return neighbourDists;
 }
 
-Prey.prototype.move = function(predators, maxTurnAngle, predatorSightDist,
+/*
+ * Moves this prey, based on a number of factors including proximity to other
+ * prey, heading, and nearby predators.
+ *
+ * @param predatorList - The list of predators.
+ * @param maxTurnAngle - The maximum turning angle of the prey.
+ * @param predatorSightDist - The maximum distance within which the prey can
+ *     see a predator.
+ * @param tooFar - A list of vectors pointing toward those neighbours which are
+ *     too far from this one.
+ * @param meanHeading - The mean heading of all of the prey.
+ * @param tooClose - A list of vectors pointing away from those neighbours
+ *     which are too close to this one.
+ * @param dist - The average distance from this boid to all of the other ones.
+ * @param minFlockDist - The distance from the center of the flock at which
+ *     this boid does not feel the desire to get any closer.
+ * @param screen - A vector representing the screen dimensions.
+ * @param weights - An object containing the weighting of each factor affecting
+ *     the prey's movement.
+ */
+Prey.prototype.move = function(predatorList, maxTurnAngle, predatorSightDist,
     tooFar, meanHeading, tooClose, dist, minFlockDist, screen, weights) {
 
   // Calculate the cohesion vector.
@@ -158,8 +195,8 @@ Prey.prototype.move = function(predators, maxTurnAngle, predatorSightDist,
 
   // Find the closest predator. If the closest predator is within a certain
   // range, the prey wants to escape.
-  var closestPredator = this.findClosestPredator(predators, predatorSightDist,
-      screen);
+  var closestPredator = this.findClosestPredator(predatorList,
+      predatorSightDist, screen);
   var closestPredatorVector = new Vector(0, 0);
 
   if (closestPredator) {
@@ -186,11 +223,11 @@ Prey.prototype.move = function(predators, maxTurnAngle, predatorSightDist,
 }
 
 /*
- * Draws a prey.
+ * Draws this prey.
  *
- * @ctx - The graphics context with which to draw.
+ * @param ctx - The graphics context with which to draw.
+ * @param color - The color with which to draw the prey.
  */
 Prey.prototype.draw = function(ctx, color) {
-  ctx.fillStyle = color;
-  drawTriangle(ctx, this.pos.x, this.pos.y, 6, 4, this.vel.angle());
+  drawTriangle(ctx, this.pos.x, this.pos.y, 6, 4, this.vel.angle(), color);
 }
