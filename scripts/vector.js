@@ -1,4 +1,12 @@
 /*
+ * Copyright (c) 2015 Adam Heins
+ *
+ * This file is part of the Predator Prey Simulation project, which is
+ * distributed under the MIT license. For the full terms, see the included
+ * LICENSE file.
+ */
+
+/*
  * 2D vector constructor.
  *
  * @param x - x-component of the vector.

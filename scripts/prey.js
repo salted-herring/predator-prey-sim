@@ -1,5 +1,10 @@
 /*
- * Prey
+ * Copyright (c) 2015 Adam Heins
+ *
+ * This file is part of the Predator Prey Simulation project, which is
+ * distributed under the MIT license. For the full terms, see the included
+ * LICENSE file.
+ *
  *
  * Prey like to form flocks. They follow some basic rules:
  *   - Prey like to travel in the same direction as others.

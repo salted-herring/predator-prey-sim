@@ -1,5 +1,10 @@
 /*
- * Predator
+ * Copyright (c) 2015 Adam Heins
+ *
+ * This file is part of the Predator Prey Simulation project, which is
+ * distributed under the MIT license. For the full terms, see the included
+ * LICENSE file.
+ *
  *
  * Predators hunt prey. Predators really only follow a single rule:
  *    - Chase (and kill, if opportunity presents itself), the closest prey.

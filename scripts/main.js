@@ -1,4 +1,12 @@
 /*
+ * Copyright (c) 2015 Adam Heins
+ *
+ * This file is part of the Predator Prey Simulation project, which is
+ * distributed under the MIT license. For the full terms, see the included
+ * LICENSE file.
+ */
+
+/*
  * Min and max limits for configurable properties. These properties are the
  * ones which can be changed by the user while the simulation is running.
  */
