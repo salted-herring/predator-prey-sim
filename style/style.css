@@ -16,6 +16,11 @@ h1 {
   text-align: center;
 }
 
+.button-wrapper {
+  display: inline-block;
+  float: right;
+}
+
 .clear {
   clear: both;
 }
@@ -35,6 +40,8 @@ h1 {
 
 .launcher input {
   display: block;
+  margin-right: 30px;
+  width: 140px;
 }
 
 .sliders input {
