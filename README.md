@@ -1,5 +1,9 @@
 # Predator Prey Simulation
-Simulates a flock of birds, similar to the artificial life program [Boids](http://en.wikipedia.org/wiki/Boids). This simulation also introduces a 'predator': a specific type of boid that hunts others, which are known as the 'prey'. Try the simulation [here](http://adamheins.github.io/predator-prey-sim/).
+Simulates a flock of birds, similar to the artificial life program
+[Boids](http://en.wikipedia.org/wiki/Boids). This simulation also introduces a
+'predator': a specific type of boid that hunts others, which are known as the
+'prey'. Try the simulation
+[here](https://adamheins.com/projects/predator-prey-sim/).
 
 ## Behaviour
 The prey move based on a number of rules:
@@ -12,7 +16,10 @@ The predators are much simpler, and follow only a single rule:
 * Chase (and kill, if possible) the nearest prey.
 
 ## Controls
-Launch the simulation by selecting the number of predators and prey with which to start, and then press the 'Launch' button. The simulation can be paused and played again by clicking on the canvas. Various parameters can be altered by adjusting the different sliders.
+Launch the simulation by selecting the number of predators and prey with which
+to start, and then press the 'Launch' button. The simulation can be paused and
+played again by clicking on the canvas. Various parameters can be altered by
+adjusting the different sliders.
 
 ## License
 MIT license. See the LICENSE file for the full terms.
