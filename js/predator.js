@@ -9,6 +9,8 @@
  * Predators hunt prey. Predators really only follow a single rule:
  *    - Chase (and kill, if opportunity presents itself), the closest prey.
  */
+import Util from './util'
+import Vector from './vector'
 
 /*
  * Predator constructor.
@@ -17,8 +19,8 @@
  * @param velocity - The initial velocity of the predator.
  */
 function Predator(position, velocity) {
-  this.pos = position;
-  this.vel = velocity;
+  this.pos = position
+  this.vel = velocity
 }
 
 /*
@@ -30,11 +32,11 @@ function Predator(position, velocity) {
  * Returns a new predator in a random location.
  */
 Predator.create = function(speed, bounds) {
-  var x = Math.floor(Math.random() * bounds.x);
-  var y = Math.floor(Math.random() * bounds.y);
-  var vel = new Vector(Math.random(), Math.random());
-  vel = vel.normalize().scale(speed);
-  return new Predator(new Vector(x, y), vel);
+  let x = Math.floor(Math.random() * bounds.x)
+  let y = Math.floor(Math.random() * bounds.y)
+  let vel = new Vector(Math.random(), Math.random())
+  vel = vel.normalize().scale(speed)
+  return new Predator(new Vector(x, y), vel)
 }
 
 /*
@@ -47,21 +49,21 @@ Predator.create = function(speed, bounds) {
  */
 Predator.prototype.findClosestPrey = function(preyList, screen) {
   if (preyList.length === 0) {
-    return null;
+    return null
   }
 
-  var closestIndex = null;
-  var closestDist = screen.len2();
-  var predator = this;
+  let closestIndex = null
+  let closestDist = screen.len2()
+  let predator = this
 
   preyList.forEach(function(prey, index) {
-    var dist = predator.pos.boundedDist(prey.pos, screen);
+    let dist = predator.pos.boundedDist(prey.pos, screen)
     if (dist < closestDist) {
-      closestDist = dist;
-      closestIndex = index;
+      closestDist = dist
+      closestIndex = index
     }
-  });
-  return closestIndex;
+  })
+  return closestIndex
 }
 
 /*
@@ -75,37 +77,46 @@ Predator.prototype.findClosestPrey = function(preyList, screen) {
  * @param ctx - The graphics context.
  * @param screen - A vector representing the screen dimensions.
  */
-Predator.prototype.move = function(preyList, speed, maxTurnAngle, killDist,
-    ctx, screen) {
-
+Predator.prototype.move = function(
+  preyList,
+  speed,
+  maxTurnAngle,
+  killDist,
+  ctx,
+  screen,
+  mouse
+) {
   // If there are no prey left. just keep moving aimlessy.
   if (preyList.length === 0) {
-    this.pos = this.pos.add(this.vel).bound(screen);
-    return;
+    //this.pos = this.pos.add(this.vel).bound(screen)
+    return
   }
 
-  var closestPreyIndex = this.findClosestPrey(preyList, screen);
-  var target = preyList[closestPreyIndex];
+  let closestPreyIndex = this.findClosestPrey(preyList, screen)
+  let target = preyList[closestPreyIndex]
 
   // Find the shortest path to the target prey.
-  var movementVector = this.pos.shortestBoundedPathTo(target.pos, screen.x,
-      screen.y);
+  let movementVector = this.pos.shortestBoundedPathTo(
+    target.pos,
+    screen.x,
+    screen.y
+  )
 
   // Draw a line from this predator to targeted prey.
-  drawLine(ctx, this.pos, target.pos, '#aaa');
+  // Util.drawLine(ctx, this.pos, target.pos, '#aaa')
 
   // Calculate the new velocity of the predator.
-  var turnAngle = turn(this.vel, movementVector, maxTurnAngle);
-  this.vel = new Vector(Math.cos(turnAngle), Math.sin(turnAngle));
-  this.vel = this.vel.scale(speed);
+  let turnAngle = Util.turn(this.vel, movementVector, maxTurnAngle)
+  this.vel = new Vector(Math.cos(turnAngle), Math.sin(turnAngle))
+  this.vel = this.vel.scale(speed)
 
   // Update the predator's position and bound it so that it stays on the
   // screen.
-  this.pos = this.pos.add(this.vel).bound(screen);
+  this.pos = mouse.bound(screen)
 
   // Kill the prey if is has been caught by the predator.
   if (this.pos.boundedDist(target.pos, screen) < killDist * killDist) {
-    preyList.splice(closestPreyIndex, 1);
+    preyList.splice(closestPreyIndex, 1)
   }
 }
 
@@ -116,5 +127,7 @@ Predator.prototype.move = function(preyList, speed, maxTurnAngle, killDist,
  * @param color - The color with which to draw the predator.
  */
 Predator.prototype.draw = function(ctx, color) {
-  drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle(), color);
+  Util.drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle(), color)
 }
+
+export default Predator

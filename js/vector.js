@@ -5,6 +5,7 @@
  * distributed under the MIT license. For the full terms, see the included
  * LICENSE file.
  */
+import Utils from './util'
 
 /*
  * 2D vector constructor.
@@ -13,8 +14,8 @@
  * @param y - y-component of the vector.
  */
 function Vector(x, y) {
-  this.x = x;
-  this.y = y;
+  this.x = x
+  this.y = y
 }
 
 /*
@@ -25,7 +26,7 @@ function Vector(x, y) {
  * Returns a new vector scaled by the scalar.
  */
 Vector.prototype.scale = function(scalar) {
-  return new Vector(this.x * scalar, this.y * scalar);
+  return new Vector(this.x * scalar, this.y * scalar)
 }
 
 /*
@@ -34,9 +35,8 @@ Vector.prototype.scale = function(scalar) {
  * Returns a new vector that is the absolute value of this one.
  */
 Vector.prototype.abs = function() {
-  return new Vector(Math.abs(this.x), Math.abs(this.y));
+  return new Vector(Math.abs(this.x), Math.abs(this.y))
 }
-
 
 /*
  * Calculates the length of this vector.
@@ -44,7 +44,7 @@ Vector.prototype.abs = function() {
  * Returns the length of this vector.
  */
 Vector.prototype.len = function() {
-  return Math.sqrt(this.len2());
+  return Math.sqrt(this.len2())
 }
 
 /* Calculates the squared length of this vector.
@@ -52,7 +52,7 @@ Vector.prototype.len = function() {
  * Returns the squared length of this vector.
  */
 Vector.prototype.len2 = function() {
-  return this.x * this.x + this.y * this.y;
+  return this.x * this.x + this.y * this.y
 }
 
 /*
@@ -61,7 +61,7 @@ Vector.prototype.len2 = function() {
  * Returns the angle formed by this vector, in [-PI, PI].
  */
 Vector.prototype.angle = function() {
-  return Math.atan2(this.y, this.x);
+  return Math.atan2(this.y, this.x)
 }
 
 /*
@@ -71,10 +71,9 @@ Vector.prototype.angle = function() {
  * Returns a new vector that is a normalized vector of this one.
  */
 Vector.prototype.normalize = function() {
-  len = this.len();
-  if (len === 0)
-    return this;
-  return new Vector(this.x / len, this.y / len);
+  let len = this.len()
+  if (len === 0) return this
+  return new Vector(this.x / len, this.y / len)
 }
 
 /*
@@ -85,7 +84,7 @@ Vector.prototype.normalize = function() {
  * Returns a new vector that is the sum of this and the other one.
  */
 Vector.prototype.add = function(other) {
-  return new Vector(this.x + other.x, this.y + other.y);
+  return new Vector(this.x + other.x, this.y + other.y)
 }
 
 /*
@@ -96,7 +95,7 @@ Vector.prototype.add = function(other) {
  * Returns a new vector that is the difference between this one and @other.
  */
 Vector.prototype.subtract = function(other) {
-  return new Vector(this.x - other.x, this.y - other.y);
+  return new Vector(this.x - other.x, this.y - other.y)
 }
 
 /*
@@ -107,14 +106,14 @@ Vector.prototype.subtract = function(other) {
  * Returns a new vector that is bounded between (0, 0) and bounds.
  */
 Vector.prototype.bound = function(bounds) {
-  var bounded = new Vector(this.x % bounds.x, this.y % bounds.y);
+  let bounded = new Vector(this.x % bounds.x, this.y % bounds.y)
   if (bounded.x < 0) {
-    bounded.x = bounds.x + bounded.x;
+    bounded.x = bounds.x + bounded.x
   }
   if (bounded.y < 0) {
-    bounded.y = bounds.y + bounded.y;
+    bounded.y = bounds.y + bounded.y
   }
-  return bounded;
+  return bounded
 }
 
 /*
@@ -130,12 +129,12 @@ Vector.prototype.bound = function(bounds) {
  */
 Vector.prototype.boundedDist = function(other, bounds) {
   // First, find the absolute distance between the vectors.
-  var d = this.subtract(other).abs();
+  let d = this.subtract(other).abs()
 
   // Check if the distances would be shorter if wrapped around the screen.
-  d.x = Math.min(d.x, bounds.x - d.x);
-  d.y = Math.min(d.y, bounds.y - d.y);
-  return d.len2();
+  d.x = Math.min(d.x, bounds.x - d.x)
+  d.y = Math.min(d.y, bounds.y - d.y)
+  return d.len2()
 }
 
 /*
@@ -149,18 +148,18 @@ Vector.prototype.boundedDist = function(other, bounds) {
  * Returns a new vector representing the shortest bounded path.
  */
 Vector.prototype.shortestBoundedPathTo = function(other, xBound, yBound) {
-  var vector = other.subtract(this);
+  let vector = other.subtract(this)
   if (vector.x < 0) {
-    vector.x = absMin(vector.x, vector.x + xBound);
+    vector.x = Utils.absMin(vector.x, vector.x + xBound)
   } else {
-    vector.x = absMin(vector.x, vector.x - xBound);
+    vector.x = Utils.absMin(vector.x, vector.x - xBound)
   }
   if (vector.y < 0) {
-    vector.y = absMin(vector.y, vector.y + yBound);
+    vector.y = Utils.absMin(vector.y, vector.y + yBound)
   } else {
-    vector.y = absMin(vector.y, vector.y - yBound);
+    vector.y = Utils.absMin(vector.y, vector.y - yBound)
   }
-  return vector;
+  return vector
 }
 
 /*
@@ -175,9 +174,9 @@ Vector.prototype.shortestBoundedPathTo = function(other, xBound, yBound) {
  * Returns a vector with same directon as this one, scaled between 0 and 1.
  */
 Vector.prototype.linearNormalize = function(lower, upper) {
-  var len = this.len();
-  var scaleFactor = (len - lower) / (upper - lower);
-  return this.normalize().scale(scaleFactor);
+  let len = this.len()
+  let scaleFactor = (len - lower) / (upper - lower)
+  return this.normalize().scale(scaleFactor)
 }
 
 /*
@@ -193,7 +192,9 @@ Vector.prototype.linearNormalize = function(lower, upper) {
  * Returns a vector with same directon as this one, scaled between 0 and 1.
  */
 Vector.prototype.reverseLinearNormalize = function(lower, upper) {
-  var len = this.len();
-  var scaleFactor = (len - lower) / (upper - lower);
-  return this.normalize().scale(1 - scaleFactor);
+  let len = this.len()
+  let scaleFactor = (len - lower) / (upper - lower)
+  return this.normalize().scale(1 - scaleFactor)
 }
+
+export default Vector
