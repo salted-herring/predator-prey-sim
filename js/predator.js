@@ -88,8 +88,7 @@ Predator.prototype.move = function(
 ) {
   // If there are no prey left. just keep moving aimlessy.
   if (preyList.length === 0) {
-    //this.pos = this.pos.add(this.vel).bound(screen)
-    return
+    this.pos = this.pos.add(this.vel).bound(screen)
   }
 
   let closestPreyIndex = this.findClosestPrey(preyList, screen)
@@ -116,7 +115,8 @@ Predator.prototype.move = function(
 
   // Kill the prey if is has been caught by the predator.
   if (this.pos.boundedDist(target.pos, screen) < killDist * killDist) {
-    preyList.splice(closestPreyIndex, 1)
+    let prey = preyList[closestPreyIndex]
+    prey.isKilled = Math.random()
   }
 }
 
@@ -127,7 +127,8 @@ Predator.prototype.move = function(
  * @param color - The color with which to draw the predator.
  */
 Predator.prototype.draw = function(ctx, color) {
-  Util.drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle(), color)
+  // Util.drawTriangle(ctx, this.pos.x, this.pos.y, 12, 8, this.vel.angle(), color)
+  Util.drawCircle(ctx, this.pos.x, this.pos.y, 24, color)
 }
 
 export default Predator

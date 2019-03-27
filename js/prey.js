@@ -24,6 +24,7 @@ import Vector from './vector'
 function Prey(position, velocity) {
   this.pos = position
   this.vel = velocity
+  this.isKilled = false
 }
 
 /*
@@ -187,12 +188,16 @@ Prey.prototype.move = function(
  * @param color - The color with which to draw the prey.
  */
 Prey.prototype.draw = function(ctx, color) {
+  if (this.isKilled !== false) {
+    color = Util.hexToRgbA(color, this.isKilled)
+  }
+
   Util.drawTriangle(
     ctx,
     this.pos.x,
     this.pos.y,
-    30,
-    16,
+    20,
+    12,
     this.vel.angle(),
     color
   )

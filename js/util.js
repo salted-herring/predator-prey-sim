@@ -80,6 +80,34 @@ Utils.drawTriangle = function(
   ctx.fill()
 }
 
+Utils.drawCircle = function(ctx, x, y, radius, colour) {
+  ctx.fillStyle = colour
+  ctx.beginPath()
+  ctx.arc(x, y, radius, 0, Math.PI * 2)
+  ctx.closePath()
+  ctx.fill()
+}
+
+Utils.hexToRgbA = function(hex, alpha) {
+  let c = ''
+
+  if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+    c = hex.substring(1).split('')
+    if (c.length === 3) {
+      c = [c[0], c[0], c[1], c[1], c[2], c[2]]
+    }
+    c = '0x' + c.join('')
+    return (
+      'rgba(' +
+      [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',') +
+      ',' +
+      alpha +
+      ')'
+    )
+  }
+  throw new Error('Bad Hex')
+}
+
 /*
  * Calculates the new heading angle based on the current heading,
  * the desired heading, and the maximum turn angle.
