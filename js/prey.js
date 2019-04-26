@@ -21,10 +21,12 @@ import Vector from './vector'
  * @param position - The initial location of the prey.
  * @param velocity - The initial velocity of the prey.
  */
-function Prey(position, velocity) {
+function Prey(position, velocity, size) {
   this.pos = position
   this.vel = velocity
   this.isKilled = false
+  this.width = size.width
+  this.height = size.height
 }
 
 /*
@@ -32,10 +34,11 @@ function Prey(position, velocity) {
  *
  * @param speed - The speed of the prey.
  * @param bounds - The upper bounds within which the prey are to be generated.
+ * @param size - object containing width & height for prey.
  *
  * Returns a new prey in a random location within the bounds.
  */
-Prey.create = function(speed, bounds) {
+Prey.create = function(speed, bounds, size) {
   // Generate a random position for the prey.
   let x = Math.floor(Math.random() * bounds.x)
   let y = Math.floor(Math.random() * bounds.y)
@@ -44,7 +47,7 @@ Prey.create = function(speed, bounds) {
   let vel = new Vector(Math.random(), Math.random())
   vel = vel.normalize().scale(speed)
 
-  return new Prey(new Vector(x, y), vel)
+  return new Prey(new Vector(x, y), vel, size)
 }
 
 /*
@@ -196,8 +199,8 @@ Prey.prototype.draw = function(ctx, color) {
     ctx,
     this.pos.x,
     this.pos.y,
-    20,
-    12,
+    this.height,
+    this.width,
     this.vel.angle(),
     color
   )
