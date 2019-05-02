@@ -191,9 +191,7 @@ Prey.prototype.move = function(
  * @param color - The color with which to draw the prey.
  */
 Prey.prototype.draw = function(ctx, color) {
-  if (this.isKilled !== false) {
-    color = Util.hexToRgbA(color, this.isKilled)
-  }
+  color = Util.hexToRgbA(color, 1)
 
   Util.drawTriangle(
     ctx,
